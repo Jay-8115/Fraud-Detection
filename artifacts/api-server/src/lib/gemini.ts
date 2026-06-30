@@ -58,20 +58,20 @@ export async function generateChatResponse(
 
   const systemPrompt = `You are FraudWatch AI, an expert financial fraud detection assistant. You help analysts understand fraud patterns, interpret results, and provide recommendations.${analysisContext ? `\n\nCurrent Analysis Context:\n${analysisContext}` : ""}`;
 
-  const contents = [
-    ...history.map((m) => ({
-      role: m.role === "assistant" ? "model" : "user",
-      parts: [{ text: m.content }],
-    })),
-    { role: "user" as const, parts: [{ text: message }] },
-  ];
-
   try {
     const model = client.getGenerativeModel({ model: "gemini-1.5-flash" });
-    const chat = model.startChat({
-      history: [{ role: "user", parts: [{ text: systemPrompt }] }, { role: "model", parts: [{ text: "Understood. I'm ready to help analyze fraud patterns and provide expert insights." }] }],
-    });
 
+    // Build full history: system-level primer + prior conversation turns
+    const chatHistory: Array<{ role: "user" | "model"; parts: [{ text: string }] }> = [
+      { role: "user", parts: [{ text: systemPrompt }] },
+      { role: "model", parts: [{ text: "Understood. I'm FraudWatch AI, ready to help analyze fraud patterns and provide expert insights." }] },
+      ...history.map((m) => ({
+        role: (m.role === "assistant" ? "model" : "user") as "user" | "model",
+        parts: [{ text: m.content }] as [{ text: string }],
+      })),
+    ];
+
+    const chat = model.startChat({ history: chatHistory });
     const result = await chat.sendMessage(message);
     return result.response.text();
   } catch (err) {

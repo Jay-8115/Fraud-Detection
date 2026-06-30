@@ -1,0 +1,3 @@
+- [Orval codegen barrel fix](orval-barrel-fix.md) — removing `schemas` option from orval config still leaves stale `export * from "./generated/types"` in barrel; must patch index.ts after each codegen run.
+- [Drizzle query API needs lib rebuild](drizzle-lib-rebuild.md) — after adding new schema files, `pnpm run typecheck:libs` must run before api-server typecheck; otherwise db.query.* types show as DrizzleTypeError.
+- [CORS credential safety pattern](cors-credentials-pattern.md) — never use `origin: true` with `credentials: true`; allowlist *.replit.dev in dev, env-var list in prod.

@@ -19,7 +19,28 @@ app.use(pinoHttp({ logger }));
 // Clerk proxy MUST be before body parsers
 app.use(CLERK_PROXY_PATH, clerkProxyMiddleware());
 
-app.use(cors({ credentials: true, origin: true }));
+const allowedOrigins = process.env.ALLOWED_ORIGINS
+  ? process.env.ALLOWED_ORIGINS.split(",").map((o) => o.trim())
+  : [];
+
+app.use(
+  cors({
+    credentials: true,
+    origin: (origin, cb) => {
+      // Allow requests with no origin (server-to-server, curl, mobile)
+      if (!origin) return cb(null, true);
+      // Allow any *.replit.dev / *.repl.co subdomain in development
+      if (
+        process.env.NODE_ENV !== "production" &&
+        (origin.endsWith(".replit.dev") || origin.endsWith(".repl.co"))
+      ) {
+        return cb(null, true);
+      }
+      if (allowedOrigins.includes(origin)) return cb(null, true);
+      return cb(new Error(`CORS: origin ${origin} not allowed`));
+    },
+  }),
+);
 app.use(cookieParser());
 app.use(express.json({ limit: "50mb" }));
 app.use(express.urlencoded({ extended: true }));

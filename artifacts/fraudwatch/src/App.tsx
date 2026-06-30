@@ -6,6 +6,7 @@ import { Route, Switch, Router as WouterRouter, useLocation, Redirect } from 'wo
 import { useEffect, useRef } from 'react';
 import { ClerkProvider, Show, useClerk } from '@clerk/react';
 import { publishableKeyFromHost } from '@clerk/react/internal';
+import { useGetMe } from '@workspace/api-client-react';
 
 // Import Pages
 import { Home } from '@/pages/Home';
@@ -137,6 +138,20 @@ function ProtectedRoute({ component: Component }: { component: React.ComponentTy
   );
 }
 
+function AdminRoute({ component: Component }: { component: React.ComponentType }) {
+  const { data: me } = useGetMe();
+  return (
+    <>
+      <Show when="signed-out">
+        <Redirect to="/" />
+      </Show>
+      <Show when="signed-in">
+        {me === undefined ? null : me?.role === 'admin' ? <Component /> : <Redirect to="/dashboard" />}
+      </Show>
+    </>
+  );
+}
+
 function ClerkProviderWithRoutes() {
   const [, setLocation] = useLocation();
 
@@ -166,9 +181,9 @@ function ClerkProviderWithRoutes() {
             <Route path="/chat"><ProtectedRoute component={ChatPage} /></Route>
             <Route path="/settings"><ProtectedRoute component={SettingsPage} /></Route>
             
-            <Route path="/admin"><ProtectedRoute component={AdminDashboard} /></Route>
-            <Route path="/admin/users"><ProtectedRoute component={AdminUsersPage} /></Route>
-            <Route path="/admin/audit-logs"><ProtectedRoute component={AdminAuditLogsPage} /></Route>
+            <Route path="/admin"><AdminRoute component={AdminDashboard} /></Route>
+            <Route path="/admin/users"><AdminRoute component={AdminUsersPage} /></Route>
+            <Route path="/admin/audit-logs"><AdminRoute component={AdminAuditLogsPage} /></Route>
             
             <Route component={NotFound} />
           </Switch>
