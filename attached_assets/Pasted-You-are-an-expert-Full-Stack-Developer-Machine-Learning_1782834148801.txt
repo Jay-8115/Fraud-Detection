@@ -1,0 +1,919 @@
+You are an expert Full Stack Developer, Machine Learning Engineer, UI/UX Designer, and Generative AI Engineer.
+
+Build a complete production-ready web application called:
+
+"AI-Powered Financial Fraud Detection & Analysis System"
+
+This is a B.Tech Final Year Project.
+
+The project should look like a real enterprise software, not an AI-generated website.
+
+The design should be simple, modern, clean, premium, responsive, attractive, and professional.
+
+Use soft colors, rounded cards, smooth animations, proper spacing, glass effects only where necessary, and make the UI similar to Microsoft, Stripe Dashboard, Atlassian, or GitHub.
+
+====================================================
+TECH STACK
+====================================================
+
+Frontend
+- Next.js 15
+- React
+- TypeScript
+- Tailwind CSS
+- Shadcn UI
+- Framer Motion
+- Recharts
+- React Hook Form
+- Zod
+
+Backend
+- Next.js API Routes
+- Python FastAPI (Machine Learning Service)
+
+Database
+- PostgreSQL
+
+ORM
+- Prisma ORM
+
+Authentication
+- JWT Authentication
+- bcrypt Password Hashing
+
+Machine Learning
+- Python
+- Pandas
+- NumPy
+- Scikit-Learn
+- Joblib
+- XGBoost
+- LightGBM
+
+Generative AI
+- Google Gemini API
+
+Charts
+- Recharts
+
+PDF Generation
+- ReportLab
+
+Deployment
+- Docker
+- Docker Compose
+
+====================================================
+PROJECT OVERVIEW
+====================================================
+
+The application allows financial analysts to upload transaction datasets in CSV, Excel, or PDF format.
+
+The uploaded file is automatically processed.
+
+The ML model predicts fraudulent transactions.
+
+The system generates visualizations.
+
+Generative AI explains the results in simple business language.
+
+The user can download a detailed professional PDF report.
+
+All analysis history is stored.
+
+Admin can monitor all users and analyses.
+
+====================================================
+USER ROLES
+====================================================
+
+Two Roles
+
+1. Admin
+
+System Owner
+
+Admin can
+
+• Login
+• View dashboard
+• View all users
+• View all uploaded files
+• View every analysis
+• Download reports
+• Delete reports
+• Delete users
+• Block users
+• View system statistics
+• View ML model usage
+• View audit logs
+• View fraud trends
+
+-----------------------------------------
+
+2. User
+
+Financial Analyst
+
+User can
+
+• Register
+• Login
+• Upload datasets
+• Analyze datasets
+• View AI Summary
+• Download Reports
+• View History
+• Chat with AI
+• Update Profile
+• Change Password
+
+====================================================
+AUTHENTICATION
+====================================================
+
+Signup Page
+
+Fields
+
+Full Name
+
+Email Address
+
+Password
+
+Confirm Password
+
+Show Password Toggle
+
+Hide Password Toggle
+
+Password Validation
+
+Minimum 8 characters
+
+One uppercase
+
+One lowercase
+
+One number
+
+One special character
+
+Email Validation
+
+Proper error messages
+
+-------------------------------------
+
+Login Page
+
+Email
+
+Password
+
+Remember Me
+
+Forgot Password
+
+Show Password
+
+Hide Password
+
+JWT Authentication
+
+====================================================
+LANDING PAGE
+====================================================
+
+Modern Hero Section
+
+Professional Navbar
+
+Features Section
+
+Technology Stack
+
+How It Works
+
+Screenshots
+
+Testimonials
+
+Contact Section
+
+Footer
+
+Professional animations
+
+====================================================
+MAIN DASHBOARD
+====================================================
+
+Dashboard should contain beautiful cards.
+
+Cards
+
+Total Uploaded Files
+
+Total Transactions
+
+Fraud Transactions
+
+Safe Transactions
+
+Fraud Percentage
+
+High Risk Transactions
+
+Last Analysis
+
+Recent Activity
+
+Quick Actions
+
+Upload File
+
+History
+
+Reports
+
+AI Assistant
+
+Latest Analysis
+
+====================================================
+UPLOAD PAGE
+====================================================
+
+Large Drag & Drop Upload Area
+
+Support
+
+CSV
+
+Excel (.xlsx)
+
+Excel (.xls)
+
+PDF
+
+Maximum Size
+
+10 MB
+
+After Upload Show
+
+Filename
+
+Size
+
+Rows
+
+Columns
+
+Upload Date
+
+Dataset Preview
+
+First 10 Rows
+
+Progress Bar
+
+Loading Animation
+
+Validation
+
+Wrong File
+
+Large File
+
+Duplicate Upload
+
+Corrupted File
+
+====================================================
+DATASET PROCESSING
+====================================================
+
+Automatically
+
+Read CSV
+
+Read Excel
+
+Read PDF Tables
+
+Handle Missing Values
+
+Remove Duplicate Records
+
+Normalize Data
+
+Encode Categories
+
+Feature Engineering
+
+Detect Invalid Columns
+
+Generate Dataset Summary
+
+====================================================
+MACHINE LEARNING
+====================================================
+
+Implement Multiple Models
+
+Random Forest
+
+Decision Tree
+
+Logistic Regression
+
+Support Vector Machine
+
+Isolation Forest
+
+XGBoost
+
+LightGBM
+
+Neural Network (MLP)
+
+Allow User To
+
+Auto Select Best Model
+
+or
+
+Choose Model Manually
+
+Display
+
+Accuracy
+
+Precision
+
+Recall
+
+F1 Score
+
+ROC AUC
+
+Training Time
+
+Prediction Time
+
+Confusion Matrix
+
+Feature Importance
+
+Save Trained Model
+
+====================================================
+RESULT PAGE
+====================================================
+
+Display
+
+Total Transactions
+
+Fraud Count
+
+Safe Count
+
+Fraud Percentage
+
+Risk Score
+
+High Risk
+
+Medium Risk
+
+Low Risk
+
+Critical Risk
+
+Professional Cards
+
+Charts
+
+Pie Chart
+
+Fraud vs Normal
+
+Bar Chart
+
+Fraud Categories
+
+Line Chart
+
+Fraud Trend
+
+Area Chart
+
+Risk Distribution
+
+Heatmap
+
+Feature Importance
+
+Model Comparison
+
+Transaction Table
+
+Columns
+
+Transaction ID
+
+Amount
+
+Risk Score
+
+Prediction
+
+Probability
+
+Reason
+
+Status
+
+Search
+
+Sort
+
+Filter
+
+Pagination
+
+====================================================
+GENERATIVE AI
+====================================================
+
+Integrate Google Gemini.
+
+After prediction generate
+
+Executive Summary
+
+Dataset Summary
+
+Fraud Explanation
+
+Patterns Found
+
+Business Insights
+
+Risk Factors
+
+Recommendations
+
+Future Prevention
+
+Model Explanation
+
+Natural Language Summary
+
+Example
+
+"The uploaded dataset contains 25,000 transactions.
+
+Random Forest achieved 98.8% accuracy.
+
+358 transactions were classified as fraudulent.
+
+Most fraud occurred during midnight hours.
+
+Large online purchases from unknown devices were identified.
+
+Recommended actions include multi-factor authentication, IP verification, and transaction velocity monitoring."
+
+====================================================
+AI CHAT ASSISTANT
+====================================================
+
+User can ask
+
+Why is Transaction 102 Fraud?
+
+Explain this report.
+
+Summarize uploaded dataset.
+
+Give prevention methods.
+
+Explain fraud patterns.
+
+Show risky customers.
+
+Generate business recommendations.
+
+Generate audit summary.
+
+Use uploaded dataset as context.
+
+====================================================
+HISTORY PAGE
+====================================================
+
+Display every uploaded file.
+
+Table Columns
+
+Filename
+
+File Size
+
+Rows
+
+Columns
+
+Upload Date
+
+Model Used
+
+Accuracy
+
+Fraud Count
+
+Status
+
+Actions
+
+View
+
+Download
+
+Delete
+
+Search
+
+Sort
+
+Pagination
+
+====================================================
+REPORT PAGE
+====================================================
+
+Generate professional PDF.
+
+Include
+
+Project Name
+
+Company Logo Placeholder
+
+User Information
+
+Dataset Information
+
+Transaction Statistics
+
+Charts
+
+Fraud Table
+
+Prediction Summary
+
+ML Performance
+
+AI Generated Summary
+
+Recommendations
+
+Generated Date
+
+Footer
+
+Professional Design
+
+Download PDF Button
+
+====================================================
+SETTINGS PAGE
+====================================================
+
+Profile
+
+Change Name
+
+Change Email
+
+Profile Picture
+
+Change Password
+
+Old Password
+
+New Password
+
+Confirm Password
+
+Delete Account
+
+Dark Mode
+
+Notification Settings
+
+====================================================
+ADMIN DASHBOARD
+====================================================
+
+Statistics
+
+Total Users
+
+Total Uploads
+
+Total Analyses
+
+Fraud Detected
+
+Storage Used
+
+Recent Users
+
+Recent Uploads
+
+Fraud Trends
+
+Charts
+
+====================================================
+ADMIN USER MANAGEMENT
+====================================================
+
+Table
+
+Name
+
+Email
+
+Uploads
+
+Last Login
+
+Role
+
+Status
+
+Actions
+
+View
+
+Edit
+
+Delete
+
+Block
+
+Reset Password
+
+====================================================
+NOTIFICATIONS
+====================================================
+
+Toast Notifications
+
+Upload Success
+
+Analysis Complete
+
+Report Generated
+
+Password Changed
+
+Error Messages
+
+====================================================
+DATABASE TABLES
+====================================================
+
+Users
+
+UploadedFiles
+
+Analysis
+
+FraudTransactions
+
+Reports
+
+AuditLogs
+
+Notifications
+
+====================================================
+API ROUTES
+====================================================
+
+/auth/signup
+
+/auth/login
+
+/auth/logout
+
+/auth/profile
+
+/upload
+
+/analyze
+
+/history
+
+/reports
+
+/chat
+
+/settings
+
+/admin/users
+
+/admin/files
+
+/admin/analysis
+
+====================================================
+SECURITY
+====================================================
+
+JWT Authentication
+
+bcrypt Password Hashing
+
+Role Based Access
+
+SQL Injection Protection
+
+XSS Protection
+
+CSRF Protection
+
+Rate Limiting
+
+Helmet
+
+Input Validation
+
+Secure File Upload
+
+Secure Headers
+
+====================================================
+EXTRA FEATURES
+====================================================
+
+Add
+
+Dashboard Analytics
+
+Fraud Heatmap
+
+Recent Activities
+
+Dataset Preview
+
+Download CSV
+
+Download PDF
+
+Download Charts
+
+Dark Mode
+
+Responsive Design
+
+Loading Skeletons
+
+Professional Animations
+
+Search
+
+Sorting
+
+Filtering
+
+Pagination
+
+Audit Logs
+
+Session Timeout
+
+Remember Me
+
+Forgot Password
+
+====================================================
+UI DESIGN
+====================================================
+
+The UI must look handcrafted by a professional designer.
+
+Use
+
+Blue
+
+White
+
+Gray
+
+Minimal Icons
+
+Rounded Cards
+
+Clean Sidebar
+
+Sticky Navbar
+
+Soft Shadows
+
+Professional Typography
+
+Responsive Layout
+
+Desktop
+
+Tablet
+
+Mobile
+
+Avoid flashy colors.
+
+Avoid AI-generated layouts.
+
+Make the interface look like enterprise software.
+
+====================================================
+PROJECT STRUCTURE
+====================================================
+
+Follow clean architecture.
+
+Separate frontend and backend.
+
+Use reusable components.
+
+Use TypeScript everywhere.
+
+Use Prisma for database.
+
+Create proper API folders.
+
+Use environment variables.
+
+Use MVC architecture.
+
+Comment important code.
+
+Optimize performance.
+
+Use lazy loading.
+
+Write production-ready code.
+
+====================================================
+README
+====================================================
+
+Create a professional README.md including
+
+Project Description
+
+Tech Stack
+
+Installation
+
+Environment Variables
+
+Running Locally
+
+Docker Setup
+
+Database Setup
+
+Machine Learning Setup
+
+Gemini API Setup
+
+Screenshots Placeholder
+
+Folder Structure
+
+License
+
+====================================================
+FINAL REQUIREMENT
+====================================================
+
+Generate a complete enterprise-grade AI-Powered Financial Fraud Detection & Analysis System.
+
+The project must feel like a real SaaS platform instead of a student project.
+
+Write clean, scalable, modular code.
+
+Do not generate placeholder pages.
+
+Every page should be fully functional.
+
+The project should be ready for development and deployment.
