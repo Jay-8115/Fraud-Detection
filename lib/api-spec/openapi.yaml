@@ -3,20 +3,36 @@ info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: FraudWatch API specification
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: users
+    description: User profile operations
+  - name: files
+    description: Dataset file upload and management
+  - name: analysis
+    description: Fraud analysis operations
+  - name: transactions
+    description: Transaction results
+  - name: chat
+    description: AI chat assistant
+  - name: reports
+    description: Report generation
+  - name: dashboard
+    description: Dashboard statistics
+  - name: admin
+    description: Admin operations
+
 paths:
   /healthz:
     get:
       operationId: healthCheck
       tags: [health]
       summary: Health check
-      description: Returns server health status
       responses:
         "200":
           description: Healthy
@@ -24,6 +40,559 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  # ─── Users ───────────────────────────────────────────────────────────────────
+  /users/me:
+    get:
+      operationId: getMe
+      tags: [users]
+      summary: Get current user profile
+      responses:
+        "200":
+          description: User profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+    patch:
+      operationId: updateMe
+      tags: [users]
+      summary: Update current user profile
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserUpdate"
+      responses:
+        "200":
+          description: Updated user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+    delete:
+      operationId: deleteMe
+      tags: [users]
+      summary: Delete current user account
+      responses:
+        "204":
+          description: Deleted
+
+  # ─── Files ───────────────────────────────────────────────────────────────────
+  /files:
+    get:
+      operationId: listFiles
+      tags: [files]
+      summary: List user's uploaded files
+      parameters:
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 20
+        - in: query
+          name: search
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of files
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FileListResponse"
+    post:
+      operationId: uploadFile
+      tags: [files]
+      summary: Upload a dataset file (multipart/form-data with 'file' field, handled server-side)
+      responses:
+        "201":
+          description: Uploaded file
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UploadedFile"
+
+  /files/{id}:
+    get:
+      operationId: getFile
+      tags: [files]
+      summary: Get file details
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: File
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UploadedFile"
+    delete:
+      operationId: deleteFile
+      tags: [files]
+      summary: Delete a file
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: Deleted
+
+  # ─── Analysis ─────────────────────────────────────────────────────────────────
+  /analysis:
+    get:
+      operationId: listAnalyses
+      tags: [analysis]
+      summary: List analyses
+      parameters:
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 20
+        - in: query
+          name: fileId
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of analyses
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AnalysisListResponse"
+    post:
+      operationId: runAnalysis
+      tags: [analysis]
+      summary: Run fraud analysis on a file
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AnalysisInput"
+      responses:
+        "201":
+          description: Analysis result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Analysis"
+
+  /analysis/{id}:
+    get:
+      operationId: getAnalysis
+      tags: [analysis]
+      summary: Get analysis details
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Analysis
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Analysis"
+    delete:
+      operationId: deleteAnalysis
+      tags: [analysis]
+      summary: Delete analysis
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: Deleted
+
+  # ─── Transactions ─────────────────────────────────────────────────────────────
+  /analysis/{id}/transactions:
+    get:
+      operationId: listTransactions
+      tags: [transactions]
+      summary: Get transactions for an analysis
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 50
+        - in: query
+          name: prediction
+          schema:
+            type: string
+            enum: [fraud, legitimate, all]
+            default: all
+        - in: query
+          name: search
+          schema:
+            type: string
+        - in: query
+          name: minRisk
+          schema:
+            type: number
+        - in: query
+          name: maxRisk
+          schema:
+            type: number
+      responses:
+        "200":
+          description: Transaction list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TransactionListResponse"
+
+  # ─── Chat ─────────────────────────────────────────────────────────────────────
+  /chat/messages:
+    post:
+      operationId: sendChatMessage
+      tags: [chat]
+      summary: Send a message to AI assistant
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ChatMessageInput"
+      responses:
+        "200":
+          description: AI response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ChatMessage"
+
+  /chat/history/{analysisId}:
+    get:
+      operationId: getChatHistory
+      tags: [chat]
+      summary: Get chat history for an analysis
+      parameters:
+        - in: path
+          name: analysisId
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Chat history
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ChatMessage"
+    delete:
+      operationId: clearChatHistory
+      tags: [chat]
+      summary: Clear chat history for an analysis
+      parameters:
+        - in: path
+          name: analysisId
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: Cleared
+
+  # ─── Reports ─────────────────────────────────────────────────────────────────
+  /reports:
+    get:
+      operationId: listReports
+      tags: [reports]
+      summary: List reports
+      parameters:
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 20
+      responses:
+        "200":
+          description: List of reports
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReportListResponse"
+    post:
+      operationId: generateReport
+      tags: [reports]
+      summary: Generate a PDF report
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReportInput"
+      responses:
+        "201":
+          description: Generated report
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Report"
+
+  /reports/{id}:
+    get:
+      operationId: getReport
+      tags: [reports]
+      summary: Get report details
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Report
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Report"
+    delete:
+      operationId: deleteReport
+      tags: [reports]
+      summary: Delete report
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: Deleted
+
+  # ─── Dashboard ────────────────────────────────────────────────────────────────
+  /dashboard/stats:
+    get:
+      operationId: getDashboardStats
+      tags: [dashboard]
+      summary: Get user dashboard statistics
+      responses:
+        "200":
+          description: Dashboard stats
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardStats"
+
+  /dashboard/fraud-trends:
+    get:
+      operationId: getFraudTrends
+      tags: [dashboard]
+      summary: Get fraud trend data for charts
+      parameters:
+        - in: query
+          name: days
+          schema:
+            type: integer
+            default: 30
+      responses:
+        "200":
+          description: Fraud trend data
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/FraudTrendPoint"
+
+  /dashboard/recent-activity:
+    get:
+      operationId: getRecentActivity
+      tags: [dashboard]
+      summary: Get recent activity feed
+      responses:
+        "200":
+          description: Recent activities
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ActivityItem"
+
+  # ─── Admin ────────────────────────────────────────────────────────────────────
+  /admin/stats:
+    get:
+      operationId: getAdminStats
+      tags: [admin]
+      summary: Get system-wide statistics
+      responses:
+        "200":
+          description: Admin stats
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminStats"
+
+  /admin/users:
+    get:
+      operationId: listAdminUsers
+      tags: [admin]
+      summary: List all users
+      parameters:
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 20
+        - in: query
+          name: search
+          schema:
+            type: string
+        - in: query
+          name: status
+          schema:
+            type: string
+            enum: [active, blocked, all]
+            default: all
+      responses:
+        "200":
+          description: User list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminUserListResponse"
+
+  /admin/users/{id}:
+    patch:
+      operationId: updateAdminUser
+      tags: [admin]
+      summary: Update a user (block/role)
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AdminUserUpdate"
+      responses:
+        "200":
+          description: Updated user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+    delete:
+      operationId: deleteAdminUser
+      tags: [admin]
+      summary: Delete a user
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: Deleted
+
+  /admin/analyses:
+    get:
+      operationId: listAdminAnalyses
+      tags: [admin]
+      summary: List all analyses
+      parameters:
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 20
+      responses:
+        "200":
+          description: All analyses
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AnalysisListResponse"
+
+  /admin/audit-logs:
+    get:
+      operationId: getAuditLogs
+      tags: [admin]
+      summary: Get audit logs
+      parameters:
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 50
+        - in: query
+          name: userId
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Audit logs
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuditLogListResponse"
+
 components:
   schemas:
     HealthStatus:
@@ -31,6 +600,446 @@ components:
       properties:
         status:
           type: string
-      required:
-        - status
+      required: [status]
 
+    # ─── User ─────────────────────────────────────────────────────────────────
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+        clerkId:
+          type: string
+        email:
+          type: string
+        name:
+          type: string
+        role:
+          type: string
+          enum: [user, admin]
+        isBlocked:
+          type: boolean
+        totalUploads:
+          type: integer
+        totalAnalyses:
+          type: integer
+        lastLoginAt:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+      required: [id, clerkId, email, name, role, isBlocked, totalUploads, totalAnalyses, createdAt]
+
+    UserUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+
+    AdminUserUpdate:
+      type: object
+      properties:
+        isBlocked:
+          type: boolean
+        role:
+          type: string
+          enum: [user, admin]
+
+    # ─── File ─────────────────────────────────────────────────────────────────
+    UploadedFile:
+      type: object
+      properties:
+        id:
+          type: string
+        userId:
+          type: string
+        fileName:
+          type: string
+        originalName:
+          type: string
+        fileSize:
+          type: integer
+        fileType:
+          type: string
+        rowCount:
+          type: ["integer", "null"]
+        columnCount:
+          type: ["integer", "null"]
+        columns:
+          type: ["array", "null"]
+          items:
+            type: string
+        preview:
+          type: ["array", "null"]
+          items:
+            type: object
+        status:
+          type: string
+          enum: [pending, processing, ready, error]
+        errorMessage:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+      required: [id, userId, fileName, originalName, fileSize, fileType, status, createdAt]
+
+    FileListResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/UploadedFile"
+        total:
+          type: integer
+        page:
+          type: integer
+        limit:
+          type: integer
+        totalPages:
+          type: integer
+      required: [data, total, page, limit, totalPages]
+
+    # ─── Analysis ─────────────────────────────────────────────────────────────
+    AnalysisInput:
+      type: object
+      properties:
+        fileId:
+          type: string
+        modelName:
+          type: string
+          enum: [auto, random_forest, decision_tree, logistic_regression, svm, isolation_forest, xgboost, lightgbm, neural_network]
+          default: auto
+      required: [fileId]
+
+    ModelMetrics:
+      type: object
+      properties:
+        accuracy:
+          type: number
+        precision:
+          type: number
+        recall:
+          type: number
+        f1Score:
+          type: number
+        rocAuc:
+          type: number
+        trainingTimeMs:
+          type: integer
+        predictionTimeMs:
+          type: integer
+      required: [accuracy, precision, recall, f1Score, rocAuc, trainingTimeMs, predictionTimeMs]
+
+    RiskBreakdown:
+      type: object
+      properties:
+        critical:
+          type: integer
+        high:
+          type: integer
+        medium:
+          type: integer
+        low:
+          type: integer
+      required: [critical, high, medium, low]
+
+    Analysis:
+      type: object
+      properties:
+        id:
+          type: string
+        userId:
+          type: string
+        fileId:
+          type: string
+        fileName:
+          type: string
+        modelName:
+          type: string
+        status:
+          type: string
+          enum: [pending, running, completed, failed]
+        totalTransactions:
+          type: ["integer", "null"]
+        fraudCount:
+          type: ["integer", "null"]
+        legitimateCount:
+          type: ["integer", "null"]
+        fraudPercentage:
+          type: ["number", "null"]
+        riskBreakdown:
+          $ref: "#/components/schemas/RiskBreakdown"
+        metrics:
+          $ref: "#/components/schemas/ModelMetrics"
+        aiSummary:
+          type: ["string", "null"]
+        featureImportance:
+          type: ["object", "null"]
+        errorMessage:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+        completedAt:
+          type: ["string", "null"]
+      required: [id, userId, fileId, fileName, modelName, status, createdAt]
+
+    AnalysisListResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/Analysis"
+        total:
+          type: integer
+        page:
+          type: integer
+        limit:
+          type: integer
+        totalPages:
+          type: integer
+      required: [data, total, page, limit, totalPages]
+
+    # ─── Transaction ──────────────────────────────────────────────────────────
+    Transaction:
+      type: object
+      properties:
+        id:
+          type: string
+        analysisId:
+          type: string
+        transactionId:
+          type: string
+        amount:
+          type: ["number", "null"]
+        prediction:
+          type: string
+          enum: [fraud, legitimate]
+        probability:
+          type: number
+        riskScore:
+          type: number
+        riskLevel:
+          type: string
+          enum: [critical, high, medium, low]
+        reason:
+          type: ["string", "null"]
+        rawData:
+          type: object
+      required: [id, analysisId, transactionId, prediction, probability, riskScore, riskLevel]
+
+    TransactionListResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/Transaction"
+        total:
+          type: integer
+        page:
+          type: integer
+        limit:
+          type: integer
+        totalPages:
+          type: integer
+        fraudCount:
+          type: integer
+        legitimateCount:
+          type: integer
+      required: [data, total, page, limit, totalPages, fraudCount, legitimateCount]
+
+    # ─── Chat ────────────────────────────────────────────────────────────────
+    ChatMessageInput:
+      type: object
+      properties:
+        message:
+          type: string
+        analysisId:
+          type: ["string", "null"]
+      required: [message]
+
+    ChatMessage:
+      type: object
+      properties:
+        id:
+          type: string
+        role:
+          type: string
+          enum: [user, assistant]
+        content:
+          type: string
+        analysisId:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+      required: [id, role, content, createdAt]
+
+    # ─── Report ──────────────────────────────────────────────────────────────
+    ReportInput:
+      type: object
+      properties:
+        analysisId:
+          type: string
+      required: [analysisId]
+
+    Report:
+      type: object
+      properties:
+        id:
+          type: string
+        userId:
+          type: string
+        analysisId:
+          type: string
+        fileName:
+          type: string
+        downloadUrl:
+          type: string
+        createdAt:
+          type: string
+      required: [id, userId, analysisId, fileName, downloadUrl, createdAt]
+
+    ReportListResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/Report"
+        total:
+          type: integer
+        page:
+          type: integer
+        limit:
+          type: integer
+        totalPages:
+          type: integer
+      required: [data, total, page, limit, totalPages]
+
+    # ─── Dashboard ────────────────────────────────────────────────────────────
+    DashboardStats:
+      type: object
+      properties:
+        totalFiles:
+          type: integer
+        totalTransactions:
+          type: integer
+        totalFraud:
+          type: integer
+        totalLegitimate:
+          type: integer
+        fraudPercentage:
+          type: number
+        highRiskCount:
+          type: integer
+        lastAnalysisAt:
+          type: ["string", "null"]
+        totalReports:
+          type: integer
+      required: [totalFiles, totalTransactions, totalFraud, totalLegitimate, fraudPercentage, highRiskCount, totalReports]
+
+    FraudTrendPoint:
+      type: object
+      properties:
+        date:
+          type: string
+        fraudCount:
+          type: integer
+        legitimateCount:
+          type: integer
+        total:
+          type: integer
+      required: [date, fraudCount, legitimateCount, total]
+
+    ActivityItem:
+      type: object
+      properties:
+        id:
+          type: string
+        type:
+          type: string
+          enum: [upload, analysis, report, login]
+        description:
+          type: string
+        createdAt:
+          type: string
+      required: [id, type, description, createdAt]
+
+    # ─── Admin ────────────────────────────────────────────────────────────────
+    AdminStats:
+      type: object
+      properties:
+        totalUsers:
+          type: integer
+        activeUsers:
+          type: integer
+        blockedUsers:
+          type: integer
+        totalUploads:
+          type: integer
+        totalAnalyses:
+          type: integer
+        totalFraudDetected:
+          type: integer
+        totalReports:
+          type: integer
+        storageUsedBytes:
+          type: integer
+      required: [totalUsers, activeUsers, blockedUsers, totalUploads, totalAnalyses, totalFraudDetected, totalReports, storageUsedBytes]
+
+    AdminUserListResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/User"
+        total:
+          type: integer
+        page:
+          type: integer
+        limit:
+          type: integer
+        totalPages:
+          type: integer
+      required: [data, total, page, limit, totalPages]
+
+    AuditLog:
+      type: object
+      properties:
+        id:
+          type: string
+        userId:
+          type: string
+        userEmail:
+          type: string
+        action:
+          type: string
+        resource:
+          type: string
+        resourceId:
+          type: ["string", "null"]
+        details:
+          type: ["string", "null"]
+        ipAddress:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+      required: [id, userId, userEmail, action, resource, createdAt]
+
+    AuditLogListResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/AuditLog"
+        total:
+          type: integer
+        page:
+          type: integer
+        limit:
+          type: integer
+        totalPages:
+          type: integer
+      required: [data, total, page, limit, totalPages]
