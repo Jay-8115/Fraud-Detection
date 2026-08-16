@@ -1,0 +1,68 @@
+1. Introduction
+1.1 Purpose
+The purpose of this Software Requirements Specification (SRS) is to define the functional and non-functional requirements of the FraudWatch AI-Powered Financial Fraud Detection and Risk Analyzer system. The document is intended for project guides, developers, testers, and stakeholders.
+1.2 Document Conventions
+Requirements are identified using FR for Functional Requirements and NFR for Non-Functional Requirements. Headings follow hierarchical numbering.
+1.3 Intended Audience and Reading Suggestions
+This document is intended for project supervisors, developers, QA engineers, and end-user financial analysts. Readers should start with the Introduction, followed by the Overall Description and System Features.
+1.4 Product Scope
+The system predicts transaction fraud using an Unsupervised ML Ensemble Engine and provides GenAI-generated executive findings, risk analysis, natural language explanations, and interactive AI Q&A via a web application.
+1.5 References
+Next.js documentation, PostgreSQL documentation, Drizzle ORM documentation, Google Generative AI reference, PDFKit library manual.
+
+2. Overall Description
+2.1 Product Perspective
+A standalone web-based application integrating a Next.js (TypeScript) client and API route backend, a PostgreSQL relational database accessed via Drizzle ORM, and integrated Generative AI (Gemini 2.5 Flash).
+2.2 Product Functions
+• Multi-format dataset upload (CSV, XLSX, PDF)
+• Data preprocessing and Z-score scaling
+• Unsupervised ML ensemble anomaly detection (IF, LOF, SVM, AE)
+• AI-generated audit summaries and natural language explanations
+• Interactive AI chat assistant
+• PDF compliance report downloads
+• User authentication and role-based views
+2.3 User Classes and Characteristics
+Standard Analyst uploads datasets, views risk metrics, and downloads PDF reports. Platform Administrator audits system activities via history logs and tracks global statistics.
+2.4 Operating Environment
+Windows/Linux server, Node.js runtime (v18.0.0+), PostgreSQL database, modern browsers.
+2.5 Design and Implementation Constraints
+Developed using Next.js App Router, TypeScript, Drizzle ORM, Vanilla CSS, and external Gemini REST API connection.
+2.6 Assumptions and Dependencies
+Depends on external Gemini API availability, correct parsing of Excel/PDF modules, and stable database connectivity.
+
+3. External Interface Requirements
+3.1 User Interfaces
+Responsive dark-mode dashboard with Navy Blue accents, Upload file dropzone, details tables, and AI chat panel.
+3.2 Hardware Interfaces
+No special hardware required beyond standard internet-enabled computers or mobile devices.
+3.3 Software Interfaces
+Next.js Server Components, PostgreSQL, Drizzle ORM, Google GenAI SDK, PDFKit.
+3.4 Communications Interfaces
+HTTPS REST APIs using JSON.
+
+4. System Features
+4.1 System Feature 1: Multi-Format File Ingestion & Preprocessing
+Ingests CSV, XLSX, and PDF files under 10MB, removes duplicates, and scales amount values.
+Functional Requirements
+• FR-1.1: System shall accept CSV, Excel, and PDF files.
+• FR-1.2: System shall automatically clean duplicates and impute missing cells.
+4.2 System Feature 2: Unsupervised ML Ensemble Engine
+Runs Isolation Forest, LOF, SVM, and AutoEncoder, combining votes dynamically.
+Functional Requirements
+• FR-2.1: System shall execute the four ML models in parallel.
+• FR-2.2: System shall combine model scores using weighted majority voting (35% IF, 30% AE, 20% LOF, 15% SVM).
+4.3 System Feature 3: GenAI Enrichment & Explanations
+Generates executive report findings and natural language explanations for flagged rows.
+Functional Requirements
+• FR-3.1: System shall generate comprehensive executive threat reports.
+• FR-3.2: System shall explain why each transaction was flagged in bulleted natural language.
+
+5. Non-Functional Requirements
+5.1 Performance Requirements
+Preprocessing and ML execution completed in less than 5 seconds for a 1,000-row file.
+5.2 Safety Requirements
+Graceful rollbacks on pipeline failures and immediate memory buffer purging on corrupt uploads.
+5.3 Security Requirements
+Role-based route validation, secure cookie-based session management, and strict tenant data isolation.
+5.4 Software Quality Attributes
+Adaptable to variable column counts, portable to Node.js platforms, and reliable with uptime logging.

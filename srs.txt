@@ -1,0 +1,158 @@
+SOFTWARE REQUIREMENTS SPECIFICATION (SRS)
+PRODUCT: FraudWatch - AI-Powered Financial Fraud Detection System
+DEVELOPMENT TEAM: Yogidham Gurukul, Kalawad Road, Rajkot - 360005, Gujarat (INDIA)
+AFFILIATION: ATMIYA UNIVERSITY
+
+================================================================================
+1. INTRODUCTION
+================================================================================
+
+1.1 Purpose
+This Software Requirements Specification (SRS) document details the complete functional, non-functional, interface, and structural specifications for FraudWatch, an AI-Powered Financial Fraud Detection System. This document serves as the primary technical reference blueprint for the development team, QA engineering department, system administrators, and university evaluation committees who oversee the architecture, deployment, and validation of the system.
+
+1.2 Document Conventions
+The following formatting standards and coding nomenclatures are applied throughout this specification document:
+- Headers: Bold uppercase section headings demarcate top-level structural segments.
+- Requirements Naming Code:
+  - Functional Requirements: Prefixed with "FR-[FeatureNumber].[RequirementNumber]" (e.g., FR-1.1).
+  - Non-Functional Requirements: Prefixed with "NFR-[CategoryCode].[RequirementNumber]" (e.g., NFR-PERF-1).
+- Highlight Standards: Critical technology modules and specific library calls are highlighted in standard inline formatting (e.g., pdfkit, drizzle, gemini).
+
+1.3 Intended Audience and Reading Suggestions
+This document is targeted toward the following reader groups:
+- Developers: Should focus heavily on Section 3 (External Interfaces), Section 4 (System Features), and Section 5 (Non-Functional Requirements) to implement modules.
+- QA Engineers: Should cross-reference Section 4 (Functional Requirements) to design end-to-end integration and system test plans.
+- Project Administrators & Academics: Should review Section 1 (Introduction) and Section 2 (Overall Description) to understand the high-level business logic, educational framework, and system constraints.
+
+1.4 Product Scope
+FraudWatch is an enterprise-grade unsupervised financial anomaly detection platform. Its core objective is to ingest large transactional datasets (CSV, Excel, PDF format) and automatically evaluate them for financial fraud indicators without requiring historical pre-labeled targets. The primary goal is to isolate anomalies in transaction streams, combine predictions using an ensemble voting mechanism, generate generative AI forensic summaries, and compile professional PDF compliance reports. The core corporate benefits include near-zero configuration for analytics setups, immediate reduction in transactional screening costs, and instant explainability for compliance reviews.
+
+1.5 References
+1. Next.js App Router Documentation - https://nextjs.org/docs
+2. Drizzle ORM Documentation - https://orm.drizzle.team
+3. PostgreSQL Database Engine Technical Reference - https://www.postgresql.org/docs
+4. Gemini AI Developer Reference - https://ai.google.dev/gemini-api/docs
+5. PDFKit Library Manual - https://pdfkit.org
+
+
+================================================================================
+2. OVERALL DESCRIPTION
+================================================================================
+
+2.1 Product Perspective
+FraudWatch is a standalone web application featuring a Next.js frontend, a database-backed API backend, and an integrated generative AI auditing engine. The application utilizes a PostgreSQL relational database queried via Drizzle ORM, with authentication managed natively through a localized secure user session handler. It is self-contained but includes interfaces to the external Gemini Generative AI endpoints.
+
+2.2 Product Functions
+The software performs the following core structural functions:
+- User Authentication & Roles: Multi-tier access framework separating Standard Analysts from Platform Administrators.
+- Dataset Ingestion & Preprocessing: Importers for CSV, Excel worksheets, and PDF document tables. Automatically filters duplicates, cleans missing properties, and scales numeric transactions with Z-score scaling.
+- Ensemble Unsupervised ML Engine: Parallel execution of Isolation Forest, Local Outlier Factor (LOF), One-Class SVM, and AutoEncoder models, combining anomaly scores via a weighted voting framework.
+- Suspicious Transaction List: Multi-faceted dashboard showing detailed metrics, risk level mapping, custom searches, filtering, and table export formats.
+- Generative AI Explanations & Summaries: AI audits identifying fraud trends and explaining specific flagging reasons per suspicious record.
+- PDF Audit Reports: Live generation and download of professional PDF summaries.
+
+2.3 User Classes and Characteristics
+The system supports two user categories:
+1. Standard Analyst: High-level financial officers. Uses the platform to upload transaction files, evaluate fraud anomalies, run AI pattern diagnostics, download PDF reports, and consult the AI chat helper. Requires minimal coding expertise.
+2. Platform Administrator: IT security managers. Audits system activities via audit logs, manages user blocks/status updates, monitors system-wide statistics (e.g., storage capacity, active analyst counts), and reviews history logs. Requires administrative system configuration credentials.
+
+2.4 Operating Environment
+The software operates within the following environment conditions:
+- Server Environment: Windows Server / Node.js Runtime (v18.0.0 or higher), PostgreSQL database server (v14 or higher).
+- Client Browser Metrics: Modern web browsers (Google Chrome v100+, Mozilla Firefox v100+, Safari v15+, Microsoft Edge v100+).
+- System Limits: Maximum file upload boundary set to 10MB per dataset.
+
+2.5 Design and Implementation Constraints
+- Programming Language: TypeScript for strict type checking across both frontend components and backend API endpoints.
+- Styling: Vanilla CSS (via global design systems and CSS variables) to maintain absolute layout control.
+- Framework: Next.js App Router.
+- ML Restrictions: Models must run strictly in the unsupervised domain since datasets do not contain "is_fraud" columns.
+
+2.6 Assumptions and Dependencies
+- The system assumes the host server has active internet access to reach the Gemini API endpoint.
+- Excel file structures are parsed using the "xlsx" library, and PDF text extraction is dependent on "pdf-parse".
+- The relational data schema is migrated and verified using "drizzle-kit".
+
+
+================================================================================
+3. EXTERNAL INTERFACE REQUIREMENTS
+================================================================================
+
+3.1 User Interfaces
+- Layout Style: Sleek dark-mode aesthetic mixed with corporate premium hues (Navy Blue accents, Slate Grey backgrounds, Crimson warning tones).
+- Component library: Dynamic responsive grid cards, glassmorphism headers, backdrop blurs, and animated progress checkers.
+- Responsive design: Single column dashboard configurations for mobile screens and side-by-side metric grids for widescreen analyst terminals.
+
+3.2 Hardware Interfaces
+No physical hardware connections are required. The system communicates entirely over logical networks and host file systems.
+
+3.3 Software Interfaces
+- Database Engine: PostgreSQL server connection using connection pooling libraries.
+- AI Endpoint: Google Generative AI API client mapping to the "gemini-1.5-flash" model.
+- File System: Local directory path allocation for storing uploaded CSV, Excel, and PDF files.
+
+3.4 Communications Interfaces
+- Network Protocols: All communication between client browsers and the Next.js server must run over HTTPS.
+- Third-Party API Transfers: Secure outbound SSL/TLS connection calls to Google Generative AI API ports.
+- Export Formats: Standard text/csv binary streams, Microsoft Excel spreadsheet structures (.xlsx), and Adobe PDF document layouts (.pdf).
+
+
+================================================================================
+4. SYSTEM FEATURES
+================================================================================
+
+4.1 System Feature 1: Multi-Format File Ingestion & Data Preprocessing
+4.1.1 Functional Requirements
+- FR-1.1: The system shall accept .csv, .xlsx, .xls, and .pdf file uploads from authenticated users up to a maximum size of 10MB.
+- FR-1.2: The system shall automatically parse tables from PDF files using text alignment patterns to isolate transaction IDs, dates, and amounts.
+- FR-1.3: The system shall clean datasets by removing duplicate rows, imputing missing numeric cells using column means, and substituting missing text fields with "Unknown".
+- FR-1.4: The system shall scale numeric transaction amounts using Z-Score scaling: (Amount - Mean) / StdDev.
+
+4.2 System Feature 2: Unsupervised ML Ensemble Engine
+4.2.1 Functional Requirements
+- FR-2.1: The system shall execute four unsupervised models (Isolation Forest, Local Outlier Factor, One-Class SVM, and AutoEncoder) in parallel upon dataset upload.
+- FR-2.2: The system shall compute a combined weighted anomaly score for each transaction using the following weights: Isolation Forest (35%), AutoEncoder (30%), Local Outlier Factor (20%), and One-Class SVM (15%).
+- FR-2.3: The system shall flag a transaction as "Fraud" if the weighted anomaly score is greater than or equal to 0.70 (70%), and "Normal" otherwise.
+- FR-2.4: The system shall automatically select a "Recommended Model" based on prediction stability, average confidence metrics, and speed.
+
+4.3 System Feature 3: Suspicious Transaction Table & Dashboards
+4.3.1 Functional Requirements
+- FR-3.1: The system shall display dashboard metrics for Total Transactions, Fraud Count, Fraud Percentage, Average Risk Score, and Risk Breakdown (Critical, High, Medium, Low).
+- FR-3.2: The system shall display every flagged suspicious transaction in a list table detailing Transaction ID, Amount, Probability, Risk Level, and AI Reasoning.
+- FR-3.3: The system shall dynamically hide columns (e.g., Country, IP Address, Device) if they do not exist in the uploaded dataset.
+- FR-3.4: The system shall support client-side search, multi-field filtering, sorting, pagination, and one-click export to CSV and Excel.
+
+4.4 System Feature 4: Generative AI Audits & Interactive Explanations
+4.4.1 Functional Requirements
+- FR-4.1: The system shall extract flagged suspicious records and compile them into a prompt query for the Gemini API.
+- FR-4.2: The system shall generate a structured threat report containing: Executive Summary, Business Summary, Fraud Pattern Analysis, Suspicious Behaviour, High Risk Customers, High Risk Merchants, Key Findings, Business Recommendations, and Future Prevention.
+- FR-4.3: The system shall generate a short, one-sentence explanatory reason detailing why each specific suspicious transaction was flagged by the ensemble models.
+
+4.5 System Feature 5: Compliance PDF Report Generation
+4.5.1 Functional Requirements
+- FR-5.1: The system shall generate a professional downloadable PDF file on request using the pdfkit library.
+- FR-5.2: The PDF report shall compile the complete Dataset Summary, Data Cleaning Metrics, Ensemble Model Comparison rates, Fraud statistics, Suspicious Transaction Table, and Gemini AI Threat Reports.
+
+
+================================================================================
+5. NON-FUNCTIONAL REQUIREMENTS
+================================================================================
+
+5.1 Performance Requirements
+- NFR-PERF-1: The preprocessing and ML ensemble execution cycle for a 1,000-record dataset shall complete in less than 5 seconds.
+- NFR-PERF-2: Web page loading latency under normal network operations shall not exceed 1.5 seconds.
+- NFR-PERF-3: Database query execution paths must return statistical aggregates in less than 500 milliseconds.
+
+5.2 Safety Requirements
+- NFR-SAFE-1: To prevent system crashes, the upload buffer shall automatically dump memory allocations immediately if an out-of-bounds file structure is intercepted.
+- NFR-SAFE-2: If an asynchronous analysis pipeline crashes, the system shall safely rollback database changes and flag the analysis status as "Failed" to prevent visual locks.
+
+5.3 Security Requirements
+- NFR-SEC-1: All session state controls must rely on secure, server-side HTTPOnly cookie tokens to block Cross-Site Scripting (XSS) extraction attempts.
+- NFR-SEC-2: Role-based access validation must run on every API endpoint route to ensure Standard Analysts cannot query Admin control pathways.
+- NFR-SEC-3: Datasets and reports uploaded by a user must be isolated strictly to that user's ID, preventing inter-tenant data leaks.
+
+5.4 Software Quality Attributes
+- NFR-QUAL-1: Adaptability: The transaction table layout must adapt dynamically to arbitrary datasets containing variable numbers of columns.
+- NFR-QUAL-2: Portability: The application must compile to a standard production build and run successfully on any host operating system supporting Node.js.
+- NFR-QUAL-3: Reliability: The system must achieve a target uptime metric of 99.9%, with automated logs capturing runtime exceptions to facilitate maintenance.

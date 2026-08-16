@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FraudWatch AI - User UI Screens Directory</title>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
+    rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <style>
+    body {
+      background-color: #f8fafc;
+      padding: 40px 24px;
+    }
+
+    .portal-container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .portal-header {
+      margin-bottom: 40px;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 24px;
+    }
+
+    .portal-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+      gap: 20px;
+    }
+
+    .portal-card {
+      background: #ffffff;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 16px;
+      text-decoration: none;
+      transition: all 0.2s ease;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    }
+
+    .portal-card:hover {
+      border-color: var(--primary);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(37, 99, 235, 0.1);
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="portal-container">
+    <header class="portal-header">
+      <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 8px;">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2.5">
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+        </svg>
+        <h1 style="font-size: 1.5rem; font-weight: 700; color: #0f172a;">FraudWatch AI &mdash; Exact User-Side UI
+          Directory</h1>
+      </div>
+      <p style="color: var(--muted-foreground); font-size: 0.875rem;">100% same-to-same standalone HTML & CSS recreating
+        all user-side screens directly matching the /src codebase layout, top header navigation, and Shadcn UI
+        components.</p>
+    </header>
+
+    <div class="portal-grid">
+      <a href="01_home.html" class="portal-card">
+        <div>
+          <span class="badge badge-secondary" style="margin-bottom: 8px;">01 — LANDING</span>
+          <h3 style="font-size: 1.1rem; color: #0f172a; margin-top: 4px; margin-bottom: 4px;">Home Screen</h3>
+          <p style="font-size: 0.825rem; color: var(--muted-foreground);">Public landing page, value proposition hero,
+            CTA group, and enterprise features grid.</p>
+        </div>
+        <span class="btn btn-outline btn-sm" style="width: fit-content;">Open Screen &rarr;</span>
+      </a>
+
+      <a href="02_signin.html" class="portal-card">
+        <div>
+          <span class="badge badge-secondary" style="margin-bottom: 8px;">02 — AUTH</span>
+          <h3 style="font-size: 1.1rem; color: #0f172a; margin-top: 4px; margin-bottom: 4px;">Sign In Screen</h3>
+          <p style="font-size: 0.825rem; color: var(--muted-foreground);">Clerk authentication layout, login input
+            fields, remember me, and sign-up link.</p>
+        </div>
+        <span class="btn btn-outline btn-sm" style="width: fit-content;">Open Screen &rarr;</span>
+      </a>
+
+      <a href="03_signup.html" class="portal-card">
+        <div>
+          <span class="badge badge-secondary" style="margin-bottom: 8px;">03 — AUTH</span>
+          <h3 style="font-size: 1.1rem; color: #0f172a; margin-top: 4px; margin-bottom: 4px;">Sign Up Screen</h3>
+          <p style="font-size: 0.825rem; color: var(--muted-foreground);">User registration form with full name, email,
+            password, and terms agreement.</p>
+        </div>
+        <span class="btn btn-outline btn-sm" style="width: fit-content;">Open Screen &rarr;</span>
+      </a>
+
+      <a href="04_dashboard.html" class="portal-card">
+        <div>
+          <span class="badge badge-secondary" style="margin-bottom: 8px;">04 — APP HUB</span>
+          <h3 style="font-size: 1.1rem; color: #0f172a; margin-top: 4px; margin-bottom: 4px;">User Dashboard Screen</h3>
+          <p style="font-size: 0.825rem; color: var(--muted-foreground);">Top Header navigation, 4 metric cards, 30-day
+            SVG trend area chart, and recent activity log.</p>
+        </div>
+        <span class="btn btn-outline btn-sm" style="width: fit-content;">Open Screen &rarr;</span>
+      </a>
+
+      <a href="05_upload.html" class="portal-card">
+        <div>
+          <span class="badge badge-secondary" style="margin-bottom: 8px;">05 — INGESTION</span>
+          <h3 style="font-size: 1.1rem; color: #0f172a; margin-top: 4px; margin-bottom: 4px;">Upload & Analyze Screen
+          </h3>
+          <p style="font-size: 0.825rem; color: var(--muted-foreground);">Dataset upload dropzone card, progress bar,
+            file details, and dataset raw table preview.</p>
+        </div>
+        <span class="btn btn-outline btn-sm" style="width: fit-content;">Open Screen &rarr;</span>
+      </a>
+
+      <a href="06_analysis.html" class="portal-card">
+        <div>
+          <span class="badge badge-secondary" style="margin-bottom: 8px;">06 — DIAGNOSTICS</span>
+          <h3 style="font-size: 1.1rem; color: #0f172a; margin-top: 4px; margin-bottom: 4px;">Fraud Analysis Screen</h3>
+          <p style="font-size: 0.825rem; color: var(--muted-foreground);">Deep analysis page with AI Executive pattern
+            report, metric cards, pie/bar charts, and suspicious transaction table.</p>
+        </div>
+        <span class="btn btn-outline btn-sm" style="width: fit-content;">Open Screen &rarr;</span>
+      </a>
+
+      <a href="07_reports.html" class="portal-card">
+        <div>
+          <span class="badge badge-secondary" style="margin-bottom: 8px;">07 — AUDIT</span>
+          <h3 style="font-size: 1.1rem; color: #0f172a; margin-top: 4px; margin-bottom: 4px;">Executive Reports Screen
+          </h3>
+          <p style="font-size: 0.825rem; color: var(--muted-foreground);">Generated audit PDF table with instant
+            download and delete actions.</p>
+        </div>
+        <span class="btn btn-outline btn-sm" style="width: fit-content;">Open Screen &rarr;</span>
+      </a>
+
+      <a href="08_history.html" class="portal-card">
+        <div>
+          <span class="badge badge-secondary" style="margin-bottom: 8px;">08 — LOGS</span>
+          <h3 style="font-size: 1.1rem; color: #0f172a; margin-top: 4px; margin-bottom: 4px;">Analysis History Screen
+          </h3>
+          <p style="font-size: 0.825rem; color: var(--muted-foreground);">Past execution history table with status
+            badges, model tags, search input, and pagination.</p>
+        </div>
+        <span class="btn btn-outline btn-sm" style="width: fit-content;">Open Screen &rarr;</span>
+      </a>
+
+      <a href="09_chat.html" class="portal-card">
+        <div>
+          <span class="badge badge-secondary" style="margin-bottom: 8px;">09 — AI COPILOT</span>
+          <h3 style="font-size: 1.1rem; color: #0f172a; margin-top: 4px; margin-bottom: 4px;">AI Assistant Screen</h3>
+          <p style="font-size: 0.825rem; color: var(--muted-foreground);">Context selector, message history with user &
+            bot bubbles, prompt input bar, and send button.</p>
+        </div>
+        <span class="btn btn-outline btn-sm" style="width: fit-content;">Open Screen &rarr;</span>
+      </a>
+
+      <a href="10_settings.html" class="portal-card">
+        <div>
+          <span class="badge badge-secondary" style="margin-bottom: 8px;">10 — ACCOUNT</span>
+          <h3 style="font-size: 1.1rem; color: #0f172a; margin-top: 4px; margin-bottom: 4px;">Account Settings Screen
+          </h3>
+          <p style="font-size: 0.825rem; color: var(--muted-foreground);">Profile settings card, user email/name input,
+            save button, and Danger Zone card.</p>
+        </div>
+        <span class="btn btn-outline btn-sm" style="width: fit-content;">Open Screen &rarr;</span>
+      </a>
+    </div>
+  </div>
+
+</body>
+
+</html>
