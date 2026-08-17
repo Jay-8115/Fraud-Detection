@@ -7,7 +7,7 @@ import { eq, and } from "drizzle-orm";
 import { getAuthenticatedUser } from "@/lib/auth";
 import { formatFile } from "@/lib/format";
 
-const uploadDir = path.join(process.cwd(), "uploads");
+import { getUploadDir, safeUnlinkFile } from "@/lib/storage";
 
 export async function GET(
   request: Request,
@@ -64,14 +64,9 @@ export async function DELETE(
       return NextResponse.json({ error: "File not found" }, { status: 404 });
     }
 
+    const uploadDir = getUploadDir();
     const filePath = path.join(uploadDir, file.fileName);
-    if (fs.existsSync(filePath)) {
-      try {
-        fs.unlinkSync(filePath);
-      } catch (err) {
-        console.error("Failed to delete file on disk:", err);
-      }
-    }
+    safeUnlinkFile(filePath);
 
     await db.delete(uploadedFilesTable).where(eq(uploadedFilesTable.id, file.id));
     return new Response(null, { status: 204 });

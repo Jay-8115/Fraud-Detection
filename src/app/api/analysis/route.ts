@@ -9,9 +9,7 @@ import { parseCSV } from "@/lib/csvParser";
 import { runEnsembleFraudDetection } from "@/lib/fraudDetection";
 import { generateAISummary, generateBatchTransactionExplanations } from "@/lib/gemini";
 import { formatAnalysis } from "@/lib/format";
-
-const uploadDir = path.join(process.cwd(), "uploads");
-
+import { getUploadDir } from "@/lib/storage";
 
 export async function GET(request: Request) {
   const user = await getAuthenticatedUser();
@@ -106,6 +104,7 @@ async function processAnalysis(
 ): Promise<void> {
   const delay = (ms: number) => new Promise(res => setTimeout(res, ms));
   try {
+    const uploadDir = getUploadDir();
     const filePath = path.join(uploadDir, file.fileName);
     let rows: Record<string, unknown>[] = [];
 

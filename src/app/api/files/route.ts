@@ -8,9 +8,7 @@ import { getAuthenticatedUser } from "@/lib/auth";
 import { parseCSV } from "@/lib/csvParser";
 import { formatFile } from "@/lib/format";
 
-const uploadDir = path.join(process.cwd(), "uploads");
-if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
-
+import { getUploadDir, safeWriteFile } from "@/lib/storage";
 
 export async function GET(request: Request) {
   const user = await getAuthenticatedUser();
@@ -79,10 +77,13 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "File too large. Maximum size is 10MB." }, { status: 400 });
     }
 
+    const uploadDir = getUploadDir();
     const uniqueFilename = `${Date.now()}-${Math.round(Math.random() * 1e9)}${ext}`;
     const filePath = path.join(uploadDir, uniqueFilename);
     const buffer = Buffer.from(await file.arrayBuffer());
-    fs.writeFileSync(filePath, buffer);
+    
+    // Safely attempt write to temporary storage (non-blocking if serverless filesystem is restricted)
+    safeWriteFile(filePath, buffer);
 
     let rowCount: number | null = null;
     let columnCount: number | null = null;
@@ -96,7 +97,7 @@ export async function POST(request: Request) {
         columns = Object.keys(rows[0]);
         columnCount = columns.length;
         rowCount = rows.length;
-        preview = rows.slice(0, 10);
+        preview = rows;
       }
     } else if (ext === ".xlsx" || ext === ".xls") {
       const XLSX = require("xlsx");
@@ -108,7 +109,7 @@ export async function POST(request: Request) {
         columns = Object.keys(rows[0]);
         columnCount = columns.length;
         rowCount = rows.length;
-        preview = rows.slice(0, 10);
+        preview = rows;
       }
     } else if (ext === ".pdf") {
       const pdf = require("pdf-parse");
@@ -118,7 +119,7 @@ export async function POST(request: Request) {
         columns = Object.keys(rows[0]);
         columnCount = columns.length;
         rowCount = rows.length;
-        preview = rows.slice(0, 10);
+        preview = rows;
       }
     }
 
