@@ -175,6 +175,10 @@ export interface Analysis {
   createdAt: string;
   /** @nullable */
   completedAt?: string | null;
+  /** @nullable */
+  explanationStatus?: string | null;
+  /** @nullable */
+  explanationProvider?: string | null;
 }
 
 export interface AnalysisListResponse {

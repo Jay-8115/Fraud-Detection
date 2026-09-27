@@ -22,6 +22,8 @@ export const analysesTable = pgTable("analyses", {
   featureImportance: json("feature_importance").$type<Record<string, number>>(),
   errorMessage: text("error_message"),
   progressStep: text("progress_step"),
+  explanationStatus: text("explanation_status", { enum: ["pending", "processing", "completed", "failed"] }).notNull().default("pending"),
+  explanationProvider: text("explanation_provider"),
   recommendedModel: text("recommended_model"),
   modelComparison: json("model_comparison"),
   dataSummary: json("data_summary"),

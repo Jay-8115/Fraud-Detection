@@ -22,7 +22,7 @@ import {
 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
-import { useUser } from "@clerk/react";
+import { useUser } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
 
 type ModelItem = {

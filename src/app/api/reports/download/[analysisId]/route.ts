@@ -121,19 +121,22 @@ function generatePDFReport(
 
       // Headers
       doc.fontSize(9).font("Helvetica-Bold");
-      doc.text("Model Name", 50, doc.y, { width: 150 });
-      doc.text("Avg Confidence", 200, doc.y, { width: 100 });
-      doc.text("Agreement Rate", 320, doc.y, { width: 100 });
-      doc.text("Flagged Count", 440, doc.y, { width: 100 });
+      const headerY = doc.y;
+      doc.text("Model Name", 50, headerY, { width: 150 });
+      doc.text("Avg Confidence", 200, headerY, { width: 100 });
+      doc.text("Agreement Rate", 320, headerY, { width: 100 });
+      doc.text("Flagged Count", 440, headerY, { width: 100 });
       doc.font("Helvetica");
       
+      let tableY = headerY + 15;
       models.forEach(m => {
-        doc.y += 14;
-        doc.text(m.name, 50, doc.y, { width: 150 });
-        doc.text(`${m.data.avgConfidence ?? 0}%`, 200, doc.y, { width: 100 });
-        doc.text(`${m.data.agreementRate ?? 0}%`, 320, doc.y, { width: 100 });
-        doc.text(String(m.data.flaggedCount ?? 0), 440, doc.y, { width: 100 });
+        doc.text(m.name, 50, tableY, { width: 150 });
+        doc.text(`${m.data.avgConfidence ?? 0}%`, 200, tableY, { width: 100 });
+        doc.text(`${m.data.agreementRate ?? 0}%`, 320, tableY, { width: 100 });
+        doc.text(String(m.data.flaggedCount ?? 0), 440, tableY, { width: 100 });
+        tableY += 15;
       });
+      doc.y = tableY;
 
       // 5. Fraud Statistics & Risk Breakdown
       doc.y += 25;
@@ -155,9 +158,15 @@ function generatePDFReport(
       doc.fillColor("#1e293b").y = 60;
       doc.fontSize(9).font("Helvetica");
       if (analysis.aiSummary) {
+        let sectionIndex = 1;
+        let subIndex = 1;
         const cleanPdfText = analysis.aiSummary
           .replace(/\*\*/g, "") // Remove raw asterisks
-          .replace(/^#+\s*/gm, "\n--- ") // Format headers nicely
+          .replace(/^#+\s*(.*)/gm, (match, p1) => {
+            subIndex = 1; // reset sub-point counter for each new header
+            return `\n${sectionIndex++}. ${p1}`;
+          }) 
+          .replace(/^[-*]\s+(.*)/gm, (match, p1) => `   ${subIndex++}. ${p1}`) // Format sub-points as 1. 2.
           .trim();
         doc.text(cleanPdfText, 50, 60, { width: 512, align: "left", lineGap: 3 });
       } else {
@@ -173,8 +182,13 @@ function generatePDFReport(
       const highTransactions = transactions.filter(t => t.riskLevel === "high");
 
       const drawTxBlock = (t: typeof transactionsTable.$inferSelect, isCritical: boolean) => {
-        // blockHeight: header (18) + 3 rows of details (36) + explanation/padding = 115
-        const blockHeight = 115;
+        const explanationText = t.reason || "Ensemble anomaly flags detected.";
+        doc.fontSize(8).font("Helvetica");
+        const explanationHeight = doc.heightOfString(explanationText, { width: 420 });
+        
+        // blockHeight: header (18) + fields (57) + separator (6) + explanation + padding (10)
+        const blockHeight = 81 + explanationHeight + 10;
+        
         if (doc.y + blockHeight > 730) {
           doc.addPage();
           doc.y = 50;
@@ -238,11 +252,10 @@ function generatePDFReport(
         doc.moveTo(60, currentY + 75).lineTo(552, currentY + 75).stroke("#cbd5e1");
 
         // Explanation (x: 60, y: currentY + 81)
-        doc.font("Helvetica-Bold").text("AI Explanation:", 60, currentY + 81);
-        const explanationText = t.reason || "Ensemble anomaly flags detected.";
+        doc.fillColor("#1e293b").font("Helvetica-Bold").text("AI Explanation:", 60, currentY + 81);
         doc.font("Helvetica").text(explanationText, 130, currentY + 81, { width: 420 });
 
-        doc.y = currentY + blockHeight + 15;
+        doc.y = currentY + blockHeight + 10;
       };
 
       // Let's render Critical section

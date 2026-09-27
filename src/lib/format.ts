@@ -55,6 +55,8 @@ export function formatAnalysis(a: typeof analysesTable.$inferSelect) {
     recommendedModel: a.recommendedModel,
     modelComparison: a.modelComparison,
     dataSummary: a.dataSummary,
+    explanationStatus: a.explanationStatus,
+    explanationProvider: a.explanationProvider,
     createdAt: a.createdAt.toISOString(),
     completedAt: a.completedAt?.toISOString() ?? null,
   };

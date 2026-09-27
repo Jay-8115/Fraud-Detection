@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import fs from "fs";
 import path from "path";
 import { db } from "@/db";
-import { analysesTable, transactionsTable, uploadedFilesTable, usersTable, auditLogsTable } from "@/db";
+import { analysesTable, transactionsTable, uploadedFilesTable, usersTable, auditLogsTable, reportsTable } from "@/db";
 import { eq, and, desc, count } from "drizzle-orm";
 import { getAuthenticatedUser } from "@/lib/auth";
 import { parseCSV } from "@/lib/csvParser";
@@ -167,47 +167,8 @@ async function processAnalysis(
       low: predictions.filter((p) => p.riskLevel === "low").length,
     };
 
-    // 7. Generating AI Summary step
-    await db.update(analysesTable).set({ progressStep: "Generating AI Summary" }).where(eq(analysesTable.id, analysisId));
-
-    const aiSummary = await generateAISummary({
-      fileName: file.originalName,
-      totalTransactions: predictions.length,
-      fraudCount: fraudPredictions.length,
-      legitimateCount: legitPredictions.length,
-      fraudPercentage,
-      modelName: "Ensemble Unsupervised Engine",
-      accuracy: metrics.accuracy,
-      riskBreakdown,
-      suspiciousTransactions: fraudPredictions.slice(0, 5) // Send top suspicious transactions for explanation
-    });
-
-    // Generate dynamic explanations using Gemini for all flagged fraud transactions
-    try {
-      const meanAmount = dataSummary?.stats?.meanAmount || 0;
-      const explanations = await generateBatchTransactionExplanations(
-        fraudPredictions.map(p => ({
-          transactionId: p.transactionId,
-          amount: p.amount,
-          riskLevel: p.riskLevel,
-          probability: p.probability,
-          rawData: p.rawData
-        })),
-        meanAmount
-      );
-
-      // Map explanations back to predictions so they are saved to DB
-      predictions.forEach(p => {
-        if (p.prediction === "fraud" && explanations[p.transactionId]) {
-          p.aiReason = explanations[p.transactionId];
-        }
-      });
-    } catch (explanationError) {
-      console.error("Error generating or mapping batch explanations:", explanationError);
-    }
-
-    // 8. Creating PDF Report step
-    await db.update(analysesTable).set({ progressStep: "Creating PDF Report" }).where(eq(analysesTable.id, analysisId));
+    // 7. Creating PDF Report step
+    await db.update(analysesTable).set({ progressStep: "Saving Results" }).where(eq(analysesTable.id, analysisId));
     await delay(1000);
 
     const txValues = predictions.map((p) => ({
@@ -218,7 +179,7 @@ async function processAnalysis(
       probability: p.probability,
       riskScore: p.riskScore,
       riskLevel: p.riskLevel,
-      reason: p.aiReason,
+      reason: "Pending AI Analysis...", // Temporary placeholder
       rawData: p.rawData,
     }));
 
@@ -226,18 +187,19 @@ async function processAnalysis(
       await db.insert(transactionsTable).values(txValues.slice(i, i + 500));
     }
 
+    // Save core analysis results before AI processing
     await db
       .update(analysesTable)
       .set({
         status: "completed",
         progressStep: "Completed",
+        explanationStatus: "processing",
         totalTransactions: predictions.length,
         fraudCount: fraudPredictions.length,
         legitimateCount: legitPredictions.length,
         fraudPercentage,
         riskBreakdown,
         metrics,
-        aiSummary,
         recommendedModel: recommendedModel.modelName,
         modelComparison,
         dataSummary,
@@ -261,12 +223,104 @@ async function processAnalysis(
       resourceId: String(analysisId),
       details: `Completed ensemble analysis on ${file.originalName} using weighted majority voting`,
     });
+
+    // Auto-generate a report entry so it appears in the Reports tab immediately
+    const reportFileName = `FraudWatch_Report_${file.originalName.replace(/\.[^.]+$/, "")}_${Date.now()}.txt`;
+    const downloadUrl = `/api/reports/download/${analysisId}`;
+    
+    // Check if report already exists for this analysis to prevent duplicates on retries
+    const existingReport = await db.query.reportsTable.findFirst({
+      where: eq(reportsTable.analysisId, analysisId)
+    });
+    
+    if (!existingReport) {
+      await db.insert(reportsTable).values({
+        userId,
+        analysisId,
+        fileName: reportFileName,
+        downloadUrl
+      });
+    }
+
+    // Now securely run AI Explanation Generation in the background
+    processAIExplanations(analysisId, file.originalName, fraudPredictions, predictions.length, legitPredictions.length, fraudPercentage, metrics.accuracy, riskBreakdown, dataSummary?.stats?.meanAmount || 0).catch((e) => {
+      console.error("processAIExplanations background error:", e);
+    });
+
   } catch (e) {
     console.error("processAnalysis runtime error:", e);
     await db
       .update(analysesTable)
-      .set({ status: "failed", errorMessage: String(e), progressStep: "Failed" })
+      .set({ status: "failed", errorMessage: String(e), progressStep: "Failed", explanationStatus: "failed" })
       .where(eq(analysesTable.id, analysisId));
+  }
+}
+
+async function processAIExplanations(
+  analysisId: number,
+  fileName: string,
+  fraudPredictions: any[],
+  totalTransactions: number,
+  legitimateCount: number,
+  fraudPercentage: number,
+  accuracy: number,
+  riskBreakdown: any,
+  meanAmount: number
+) {
+  try {
+    // 1. Generate Summary
+    const { text: aiSummary, provider: summaryProvider } = await generateAISummary({
+      fileName,
+      totalTransactions,
+      fraudCount: fraudPredictions.length,
+      legitimateCount,
+      fraudPercentage,
+      modelName: "Ensemble Unsupervised Engine",
+      accuracy,
+      riskBreakdown,
+      suspiciousTransactions: fraudPredictions.slice(0, 5)
+    });
+
+    await db.update(analysesTable)
+      .set({ aiSummary, explanationProvider: summaryProvider })
+      .where(eq(analysesTable.id, analysisId));
+
+    // 2. Generate Batch Explanations (max 40 as per limit to prevent quota exhaustion)
+    const txToExplain = fraudPredictions.slice(0, 40).map(p => ({
+      transactionId: p.transactionId,
+      amount: p.amount,
+      riskLevel: p.riskLevel,
+      probability: p.probability,
+      rawData: p.rawData
+    }));
+
+    if (txToExplain.length > 0) {
+      const { explanations, provider: explProvider } = await generateBatchTransactionExplanations(txToExplain, meanAmount);
+      
+      // Update the database transaction by transaction with their explanation
+      for (const [txId, reason] of Object.entries(explanations)) {
+        await db.update(transactionsTable)
+          .set({ reason, explanationProvider: explProvider })
+          .where(and(eq(transactionsTable.analysisId, analysisId), eq(transactionsTable.transactionId, txId)));
+      }
+    }
+
+    // Apply fallback logic to the rest of the transactions (beyond the 40 limit)
+    const remainingTxs = fraudPredictions.slice(40);
+    for (const tx of remainingTxs) {
+      const { generateFallbackTransactionExplanation } = await import("@/lib/ai/fallback");
+      const reason = generateFallbackTransactionExplanation(tx, meanAmount);
+      await db.update(transactionsTable)
+        .set({ reason, explanationProvider: "system" })
+        .where(and(eq(transactionsTable.analysisId, analysisId), eq(transactionsTable.transactionId, tx.transactionId)));
+    }
+
+    // Mark explanations as completed
+    await db.update(analysesTable).set({ explanationStatus: "completed" }).where(eq(analysesTable.id, analysisId));
+
+  } catch (error) {
+    console.error("AI Explanation failure:", error);
+    await db.update(analysesTable).set({ explanationStatus: "failed" }).where(eq(analysesTable.id, analysisId));
   }
 }
 

@@ -10,7 +10,7 @@ import { FileUp, AlertTriangle, CheckCircle2, ShieldAlert, Activity } from "luci
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, Area, AreaChart } from "recharts"
 import { format, parseISO } from "date-fns"
 import { Skeleton } from "@/components/ui/skeleton"
-import { useUser } from "@clerk/react"
+import { useUser } from "@clerk/nextjs"
 import { useRouter } from "next/navigation"
 
 export default function Dashboard() {

@@ -13,7 +13,7 @@ import { AlertCircle, Download, RefreshCw, Sparkles, Filter, Search, CheckCircle
 import { Input } from "@/components/ui/input"
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, LineChart, Line } from "recharts"
 import { formatCurrency } from "@/lib/utils"
-import { useUser } from "@clerk/react"
+import { useUser } from "@clerk/nextjs"
 import { AISummaryViewer } from "@/components/analysis/AISummaryViewer"
 import * as XLSX from "xlsx"
 
@@ -59,6 +59,18 @@ export default function AnalysisResultPage() {
   const [expandedTxId, setExpandedTxId] = useState<string | null>(null)
   const [exporting, setExporting] = useState(false)
   const [generatingReport, setGeneratingReport] = useState(false)
+  const [retryingAI, setRetryingAI] = useState(false)
+
+  const handleRetryAI = async () => {
+    setRetryingAI(true);
+    try {
+      await fetch(`/api/analysis/${id}/explain`, { method: "POST" });
+      // Wait a moment then the SWR polling will catch the updated status
+      setTimeout(() => setRetryingAI(false), 2000);
+    } catch {
+      setRetryingAI(false);
+    }
+  };
 
   useEffect(() => {
     if (isLoaded && !user) {
@@ -92,10 +104,6 @@ export default function AnalysisResultPage() {
     limit: 500,
     prediction: "fraud"
   })
-
-  if (!isLoaded || !user) {
-    return null
-  }
 
   const isComplete = analysis?.status === 'completed'
   const isFailed = analysis?.status === 'failed'
@@ -145,19 +153,6 @@ export default function AnalysisResultPage() {
     };
   }, [allSuspiciousData]);
 
-  // Formatted summaries
-  const pieData = analysis ? [
-    { name: 'Fraud', value: analysis.fraudCount || 0 },
-    { name: 'Normal', value: (analysis.totalTransactions || 0) - (analysis.fraudCount || 0) },
-  ] : []
-
-  const riskData = analysis?.riskBreakdown ? [
-    { name: 'Critical', count: analysis.riskBreakdown.critical, fill: 'hsl(var(--destructive))' },
-    { name: 'High', count: analysis.riskBreakdown.high, fill: '#f97316' }, 
-    { name: 'Medium', count: analysis.riskBreakdown.medium, fill: '#fbbf24' }, 
-    { name: 'Low', count: analysis.riskBreakdown.low, fill: '#22c55e' }, 
-  ] : []
-
   // Check columns dynamically in rawData to hide missing ones
   const visibleColumns = useMemo(() => {
     const defaultCols = {
@@ -191,6 +186,23 @@ export default function AnalysisResultPage() {
       ipAddress: hasKey("ipaddress") || hasKey("ip"),
     };
   }, [transactionsData]);
+
+  // Formatted summaries
+  const pieData = analysis ? [
+    { name: 'Fraud', value: analysis.fraudCount || 0 },
+    { name: 'Normal', value: (analysis.totalTransactions || 0) - (analysis.fraudCount || 0) },
+  ] : []
+
+  const riskData = analysis?.riskBreakdown ? [
+    { name: 'Critical', count: analysis.riskBreakdown.critical, fill: 'hsl(var(--destructive))' },
+    { name: 'High', count: analysis.riskBreakdown.high, fill: '#f97316' }, 
+    { name: 'Medium', count: analysis.riskBreakdown.medium, fill: '#fbbf24' }, 
+    { name: 'Low', count: analysis.riskBreakdown.low, fill: '#22c55e' }, 
+  ] : []
+
+  if (!isLoaded || !user) {
+    return null
+  }
 
   // Export functions
   const handleExportExcel = () => {
@@ -376,6 +388,21 @@ export default function AnalysisResultPage() {
               <Badge variant="outline" className="bg-primary/5 text-primary border-primary/20 font-semibold">
                 Ensemble Engine
               </Badge>
+              {analysis.explanationStatus === "processing" && (
+                <Badge variant="outline" className="bg-amber-500/10 text-amber-600 border-amber-500/20 font-semibold flex items-center gap-1.5">
+                  <RefreshCw className="h-3 w-3 animate-spin" /> Generating Explanations
+                </Badge>
+              )}
+              {analysis.explanationStatus === "failed" && (
+                <Badge variant="outline" className="bg-red-500/10 text-red-600 border-red-500/20 font-semibold flex items-center gap-1.5">
+                  <AlertCircle className="h-3 w-3" /> AI Explanations Failed
+                </Badge>
+              )}
+              {analysis.explanationStatus === "completed" && analysis.explanationProvider && (
+                <Badge variant="outline" className="bg-emerald-500/10 text-emerald-600 border-emerald-500/20 font-semibold flex items-center gap-1.5">
+                  <Sparkles className="h-3 w-3" /> Powered by {analysis.explanationProvider.toUpperCase()}
+                </Badge>
+              )}
             </div>
             <div className="flex items-center gap-2 mt-1.5 text-xs text-muted-foreground">
               <span>{analysis.totalTransactions?.toLocaleString()} Total Rows</span>
@@ -383,10 +410,18 @@ export default function AnalysisResultPage() {
               <span className="font-medium text-primary">Recommended Model: {analysis.recommendedModel || "Isolation Forest"}</span>
             </div>
           </div>
-          <Button onClick={handleDownloadPDFReport} disabled={generatingReport} className="shadow-sm">
-            <FileText className="mr-2 h-4 w-4" /> 
-            {generatingReport ? "Generating Report..." : "Download PDF Report"}
-          </Button>
+          <div className="flex items-center gap-3">
+            {analysis.explanationStatus === "failed" && (
+              <Button onClick={handleRetryAI} disabled={retryingAI} variant="outline" className="shadow-sm border-amber-200 text-amber-700 hover:bg-amber-50">
+                <RefreshCw className={`mr-2 h-4 w-4 ${retryingAI ? 'animate-spin' : ''}`} /> 
+                {retryingAI ? "Retrying..." : "Retry AI Explanations"}
+              </Button>
+            )}
+            <Button onClick={handleDownloadPDFReport} disabled={generatingReport} className="shadow-sm">
+              <FileText className="mr-2 h-4 w-4" /> 
+              {generatingReport ? "Generating Report..." : "Download PDF Report"}
+            </Button>
+          </div>
         </div>
 
         {/* AI Executive Summary Card */}

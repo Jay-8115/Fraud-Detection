@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useUser, useClerk } from "@clerk/react";
+import { SignInButton, SignUpButton, SignedIn, SignedOut, UserButton, useUser } from "@clerk/nextjs";
 import { 
   LayoutDashboard, 
   Upload, 
@@ -38,7 +38,6 @@ const adminItems = [
 export function Header() {
   const pathname = usePathname();
   const { user, isLoaded } = useUser();
-  const { signOut } = useClerk();
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -126,144 +125,19 @@ export function Header() {
             </button>
           )}
 
-          {isLoaded && user && (
-            <>
-              {/* Mobile Navigation Dropdown (3-dots) */}
-              <div 
-                id="mobile-menu-container"
-                className="relative md:hidden"
-              >
-                <button
-                  onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                  className="flex h-8 w-8 items-center justify-center rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-all duration-200 focus:outline-none"
-                  aria-label="Navigation Menu"
-                >
-                  <MoreHorizontal className="h-5 w-5" />
-                </button>
-
-                {mobileMenuOpen && (
-                  <div className="absolute right-0 top-full z-50 mt-1 w-56 rounded-xl border bg-card p-1.5 shadow-lg animate-in fade-in slide-in-from-top-2 duration-150">
-                    <div className="px-3 py-2 border-b">
-                      <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Navigation</p>
-                    </div>
-                    <div className="mt-1.5 space-y-0.5">
-                      {items.map((item) => {
-                        const isActive = item.href === "/admin" || item.href === "/dashboard"
-                ? pathname === item.href
-                : pathname.startsWith(item.href);
-                        return (
-                          <Link
-                            key={item.href}
-                            href={item.href}
-                            onClick={() => setMobileMenuOpen(false)}
-                            className={cn(
-                              "flex w-full items-center gap-2 rounded-lg px-3 py-2 text-xs font-medium transition-colors",
-                              isActive
-                                ? "bg-primary/10 text-primary"
-                                : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                            )}
-                          >
-                            <item.icon className="h-4 w-4" />
-                            {item.label}
-                          </Link>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* User Block Trigger */}
-              <div 
-                id="user-dropdown-container"
-                className="relative"
-                onMouseEnter={() => {
-                  if (typeof window !== 'undefined' && window.innerWidth >= 1024) {
-                    setDropdownOpen(true);
-                  }
-                }}
-                onMouseLeave={() => {
-                  if (typeof window !== 'undefined' && window.innerWidth >= 1024) {
-                    setDropdownOpen(false);
-                  }
-                }}
-              >
-                <button
-                  onClick={() => setDropdownOpen(!dropdownOpen)}
-                  className="flex items-center gap-3 rounded-lg p-1.5 hover:bg-muted/80 transition-all duration-200 focus:outline-none"
-                >
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 font-semibold text-primary text-sm shadow-inner">
-                    {user.firstName?.[0] || user.emailAddresses?.[0]?.emailAddress?.[0]?.toUpperCase() || "A"}
-                  </div>
-                  <div className="hidden lg:flex flex-col text-left">
-                    <span className="text-xs font-semibold leading-none text-foreground flex items-center gap-1">
-                      {user.fullName || "Analyst"}
-                      <span className="text-[8px] text-muted-foreground">▼</span>
-                    </span>
-                    <span className="text-[10px] text-muted-foreground truncate max-w-[120px] mt-0.5">
-                      {user.emailAddresses?.[0]?.emailAddress}
-                    </span>
-                  </div>
-                </button>
-
-                {/* Dropdown Menu */}
-                {dropdownOpen && (
-                  <div className="absolute right-0 top-full z-50 mt-1 w-56 rounded-xl border bg-card p-1.5 shadow-lg animate-in fade-in slide-in-from-top-2 duration-150">
-                    <div className="px-3 py-2 border-b">
-                      <p className="text-xs font-semibold text-foreground">{user.fullName || "Analyst"}</p>
-                      <p className="text-[10px] text-muted-foreground truncate mt-0.5">
-                        {user.emailAddresses?.[0]?.emailAddress}
-                      </p>
-                      <p className="text-[9px] font-bold text-primary mt-1.5 uppercase tracking-wider">
-                        {user.publicMetadata?.role || "user"}
-                      </p>
-                    </div>
-                    
-                    <div className="mt-1.5 space-y-0.5">
-                      <Link
-                        href="/activities"
-                        onClick={() => setDropdownOpen(false)}
-                        className={cn(
-                          "flex w-full items-center gap-2 rounded-lg px-3 py-2 text-xs font-medium transition-colors",
-                          pathname === "/activities"
-                            ? "bg-primary/10 text-primary"
-                            : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                        )}
-                      >
-                        <Activity className="h-3.5 w-3.5" />
-                        View All Activities
-                      </Link>
-
-                      <Link
-                        href="/settings"
-                        onClick={() => setDropdownOpen(false)}
-                        className={cn(
-                          "flex w-full items-center gap-2 rounded-lg px-3 py-2 text-xs font-medium transition-colors",
-                          pathname === "/settings"
-                            ? "bg-primary/10 text-primary"
-                            : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                        )}
-                      >
-                        <Settings className="h-3.5 w-3.5" />
-                        Settings
-                      </Link>
-                      
-                      <button
-                        onClick={() => {
-                          setDropdownOpen(false);
-                          signOut({ redirectUrl: "/" });
-                        }}
-                        className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-xs font-medium text-destructive hover:bg-destructive/10 transition-colors text-left"
-                      >
-                        <LogOut className="h-3.5 w-3.5" />
-                        Sign Out
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </>
-          )}
+          <SignedOut>
+            <div className="flex gap-2">
+              <SignInButton mode="modal" fallbackRedirectUrl="/dashboard" signUpFallbackRedirectUrl="/dashboard">
+                <button className="rounded-lg px-4 py-2 text-sm font-medium hover:bg-muted transition-colors">Sign In</button>
+              </SignInButton>
+              <SignUpButton mode="modal" fallbackRedirectUrl="/dashboard" signInFallbackRedirectUrl="/dashboard">
+                <button className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors">Sign Up</button>
+              </SignUpButton>
+            </div>
+          </SignedOut>
+          <SignedIn>
+            <UserButton afterSignOutUrl="/" />
+          </SignedIn>
         </div>
       </div>
     </header>

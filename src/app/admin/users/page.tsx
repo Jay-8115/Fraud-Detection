@@ -23,7 +23,7 @@ import {
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
-import { useUser } from "@clerk/react";
+import { useUser } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
 import {
   AlertDialog,

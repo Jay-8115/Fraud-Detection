@@ -12,6 +12,7 @@ export const transactionsTable = pgTable("transactions", {
   riskScore: real("risk_score").notNull(),
   riskLevel: text("risk_level", { enum: ["critical", "high", "medium", "low"] }).notNull(),
   reason: text("reason"),
+  explanationProvider: text("explanation_provider"),
   rawData: json("raw_data").$type<Record<string, unknown>>().notNull().default({}),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });

@@ -11,7 +11,7 @@ import { UploadCloud, File as FileIcon, AlertCircle, Loader2, CheckCircle, Datab
 import { useToast } from "@/hooks/use-toast"
 import { Progress } from "@/components/ui/progress"
 import { formatBytes } from "@/lib/utils"
-import { useUser } from "@clerk/react"
+import { useUser } from "@clerk/nextjs"
 import { useRouter } from "next/navigation"
 
 export default function UploadPage() {

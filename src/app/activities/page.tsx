@@ -20,7 +20,7 @@ import {
   Filter,
   RefreshCw
 } from "lucide-react";
-import { useUser } from "@clerk/react";
+import { useUser } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import { getGetRecentActivityQueryKey } from "@/api-client";
