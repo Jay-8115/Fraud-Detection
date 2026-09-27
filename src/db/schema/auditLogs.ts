@@ -6,11 +6,14 @@ export const auditLogsTable = pgTable("audit_logs", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").notNull(),
   userEmail: text("user_email").notNull(),
+  userEmailEncrypted: text("user_email_encrypted"),
   action: text("action").notNull(),
   resource: text("resource").notNull(),
   resourceId: text("resource_id"),
   details: text("details"),
+  detailsEncrypted: text("details_encrypted"),
   ipAddress: text("ip_address"),
+  ipAddressEncrypted: text("ip_address_encrypted"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 

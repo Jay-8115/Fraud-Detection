@@ -2,6 +2,7 @@ import { db } from "@/db";
 import { usersTable } from "@/db";
 import { eq } from "drizzle-orm";
 import { auth, currentUser } from "@clerk/nextjs/server";
+import { encrypt, hashForLookup } from "@/lib/crypto";
 
 export interface AuthenticatedUser {
   id: number;
@@ -19,9 +20,13 @@ export async function getAuthenticatedUser(): Promise<AuthenticatedUser | null> 
       return null;
     }
 
-    // Fast path: Find user by clerkId
+    // Fast path: Find user by clerkId or clerkIdHmac
+    const hmacClerkId = hashForLookup(clerkId);
     let user = await db.query.usersTable.findFirst({
-      where: eq(usersTable.clerkId, clerkId),
+      where: (table, { or, eq }) => or(
+        eq(table.clerkIdHmac, hmacClerkId || ""),
+        eq(table.clerkId, clerkId)
+      ),
     });
 
     // Synchronization path: User doesn't exist, link by email or create new
@@ -35,15 +40,27 @@ export async function getAuthenticatedUser(): Promise<AuthenticatedUser | null> 
       const email = clerkUser.emailAddresses[0]?.emailAddress || "";
       const name = `${clerkUser.firstName || ""} ${clerkUser.lastName || ""}`.trim() || email.split("@")[0] || "Unknown User";
 
+      const emailHmac = hashForLookup(email);
+
       const existingEmailUser = await db.query.usersTable.findFirst({
-        where: eq(usersTable.email, email)
+        where: (table, { or, eq }) => or(
+          eq(table.emailHmac, emailHmac || ""),
+          eq(table.email, email)
+        ),
       });
 
       if (existingEmailUser) {
         // Link existing legacy account to new Clerk identity
         const updated = await db.update(usersTable)
-          .set({ clerkId, name, updatedAt: new Date() })
-          .where(eq(usersTable.email, email))
+          .set({ 
+            clerkId, 
+            clerkIdEncrypted: encrypt(clerkId),
+            clerkIdHmac: hashForLookup(clerkId),
+            name, 
+            nameEncrypted: encrypt(name),
+            updatedAt: new Date() 
+          })
+          .where(eq(usersTable.id, existingEmailUser.id))
           .returning();
         
         user = updated[0];
@@ -51,13 +68,25 @@ export async function getAuthenticatedUser(): Promise<AuthenticatedUser | null> 
         // Create new user (idempotent upsert safely handles race conditions)
         const inserted = await db.insert(usersTable).values({
           clerkId,
+          clerkIdEncrypted: encrypt(clerkId),
+          clerkIdHmac: hashForLookup(clerkId),
           email,
+          emailEncrypted: encrypt(email),
+          emailHmac: hashForLookup(email),
           name,
+          nameEncrypted: encrypt(name),
           role: "user",
           password: "", // Clerk handles passwords, do not store secrets
         }).onConflictDoUpdate({
           target: usersTable.clerkId,
-          set: { email, name, updatedAt: new Date() }
+          set: { 
+            email, 
+            emailEncrypted: encrypt(email),
+            emailHmac: hashForLookup(email),
+            name, 
+            nameEncrypted: encrypt(name),
+            updatedAt: new Date() 
+          }
         }).returning();
         
         user = inserted[0];

@@ -7,6 +7,7 @@ export const analysesTable = pgTable("analyses", {
   userId: integer("user_id").notNull(),
   fileId: integer("file_id").notNull(),
   fileName: text("file_name").notNull(),
+  fileNameEncrypted: text("file_name_encrypted"),
   modelName: text("model_name").notNull().default("auto"),
   status: text("status", { enum: ["pending", "running", "completed", "failed"] }).notNull().default("pending"),
   totalTransactions: integer("total_transactions"),
@@ -19,6 +20,7 @@ export const analysesTable = pgTable("analyses", {
     f1Score: number; rocAuc: number; trainingTimeMs: number; predictionTimeMs: number;
   }>(),
   aiSummary: text("ai_summary"),
+  aiSummaryEncrypted: text("ai_summary_encrypted"),
   featureImportance: json("feature_importance").$type<Record<string, number>>(),
   errorMessage: text("error_message"),
   progressStep: text("progress_step"),

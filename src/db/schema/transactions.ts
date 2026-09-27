@@ -6,6 +6,7 @@ export const transactionsTable = pgTable("transactions", {
   id: serial("id").primaryKey(),
   analysisId: integer("analysis_id").notNull(),
   transactionId: text("transaction_id").notNull(),
+  transactionIdEncrypted: text("transaction_id_encrypted"),
   amount: real("amount"),
   prediction: text("prediction", { enum: ["fraud", "legitimate"] }).notNull(),
   probability: real("probability").notNull(),
@@ -14,6 +15,7 @@ export const transactionsTable = pgTable("transactions", {
   reason: text("reason"),
   explanationProvider: text("explanation_provider"),
   rawData: json("raw_data").$type<Record<string, unknown>>().notNull().default({}),
+  rawDataEncrypted: text("raw_data_encrypted"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
