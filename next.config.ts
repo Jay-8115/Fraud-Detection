@@ -20,7 +20,7 @@ const nextConfig: NextConfig = {
 
   async rewrites() {
     const clerkFrontendApi = getClerkFrontendApiUrl();
-    if (clerkFrontendApi && process.env.NEXT_PUBLIC_CLERK_PROXY_URL) {
+    if (clerkFrontendApi) {
       return [
         {
           source: '/__clerk/:path*',
