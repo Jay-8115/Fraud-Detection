@@ -1,35 +1,8 @@
 import type { NextConfig } from "next";
 import path from "path";
 
-function getClerkFrontendApiUrl() {
-  try {
-    const key = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY || "";
-    const base64 = key.split('_')[2];
-    if (base64) {
-      const decoded = Buffer.from(base64, 'base64').toString();
-      return `https://${decoded.replace('$', '')}`;
-    }
-  } catch (e) {
-    return "";
-  }
-  return "";
-}
-
 const nextConfig: NextConfig = {
   serverExternalPackages: ["pdfkit"],
-
-  async rewrites() {
-    const clerkFrontendApi = getClerkFrontendApiUrl();
-    if (clerkFrontendApi) {
-      return [
-        {
-          source: '/__clerk/:path*',
-          destination: `${clerkFrontendApi}/:path*`,
-        },
-      ];
-    }
-    return [];
-  },
 
   async headers() {
     return [
