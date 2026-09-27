@@ -61,7 +61,7 @@ export async function generateWithGemini(prompt: string): Promise<string> {
   const credentials = getCredentials();
   if (credentials.length === 0) throw new Error("No Gemini keys configured");
 
-  const modelName = process.env.GEMINI_MODEL || "gemini-2.5-flash";
+  const modelName = process.env.GEMINI_MODEL || "gemini-3.8-flash";
   const exhaustedGroups = new Set<string>();
   let lastError: any = null;
 
@@ -106,7 +106,7 @@ export async function generateChatWithGemini(
   const credentials = getCredentials();
   if (credentials.length === 0) throw new Error("No Gemini keys configured");
 
-  const modelName = process.env.GEMINI_MODEL || "gemini-2.5-flash";
+  const modelName = process.env.GEMINI_MODEL || "gemini-3.8-flash";
   const exhaustedGroups = new Set<string>();
   let lastError: any = null;
 

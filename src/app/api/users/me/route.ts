@@ -3,6 +3,7 @@ import { db } from "@/db";
 import { usersTable } from "@/db";
 import { eq } from "drizzle-orm";
 import { getAuthenticatedUser } from "@/lib/auth";
+import { encrypt, decrypt } from "@/lib/crypto";
 
 export async function GET() {
   const user = await getAuthenticatedUser();
@@ -21,9 +22,9 @@ export async function GET() {
 
   return NextResponse.json({
     id: String(dbUser.id),
-    clerkId: dbUser.clerkId,
-    email: dbUser.email,
-    name: dbUser.name,
+    clerkId: decrypt(dbUser.clerkIdEncrypted) || "Unknown",
+    email: decrypt(dbUser.emailEncrypted) || "Unknown",
+    name: dbUser.name || "Unknown",
     role: dbUser.role,
     isBlocked: dbUser.isBlocked,
     totalUploads: dbUser.totalUploads,
@@ -43,7 +44,7 @@ export async function PATCH(request: Request) {
     const { name } = await request.json();
     const [updatedUser] = await db
       .update(usersTable)
-      .set({ name, updatedAt: new Date() })
+      .set({ name: name ? name : undefined, updatedAt: new Date() })
       .where(eq(usersTable.id, user.id))
       .returning();
 
@@ -53,9 +54,9 @@ export async function PATCH(request: Request) {
 
     return NextResponse.json({
       id: String(updatedUser.id),
-      clerkId: updatedUser.clerkId,
-      email: updatedUser.email,
-      name: updatedUser.name,
+      clerkId: decrypt(updatedUser.clerkIdEncrypted) || "Unknown",
+      email: decrypt(updatedUser.emailEncrypted) || "Unknown",
+      name: updatedUser.name || "Unknown",
       role: updatedUser.role,
       isBlocked: updatedUser.isBlocked,
       totalUploads: updatedUser.totalUploads,

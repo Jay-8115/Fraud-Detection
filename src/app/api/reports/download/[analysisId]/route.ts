@@ -4,6 +4,7 @@ import { analysesTable, transactionsTable } from "@/db";
 import { eq, and, desc } from "drizzle-orm";
 import { getAuthenticatedUser } from "@/lib/auth";
 import PDFDocument from "pdfkit";
+import { decrypt } from "@/lib/crypto";
 
 export async function GET(
   request: Request,
@@ -82,7 +83,7 @@ function generatePDFReport(
       
       doc.y += 12;
       doc.fontSize(9).font("Helvetica");
-      doc.text(`Dataset File Name: ${analysis.fileName}`);
+      doc.text(`Dataset File Name: ${decrypt(analysis.fileNameEncrypted) || "Unknown File"}`);
       doc.text(`Generation Date: ${new Date().toUTCString()}`);
       doc.text(`Model Recommended: ${analysis.recommendedModel || "Isolation Forest"}`);
       doc.text(`Total Transactions Analyzed: ${analysis.totalTransactions?.toLocaleString() ?? "N/A"}`);
@@ -157,16 +158,17 @@ function generatePDFReport(
       
       doc.fillColor("#1e293b").y = 60;
       doc.fontSize(9).font("Helvetica");
-      if (analysis.aiSummary) {
+      const summaryText = analysis.aiSummaryEncrypted ? decrypt(analysis.aiSummaryEncrypted) : null;
+      if (summaryText) {
         let sectionIndex = 1;
         let subIndex = 1;
-        const cleanPdfText = analysis.aiSummary
+        const cleanPdfText = summaryText
           .replace(/\*\*/g, "") // Remove raw asterisks
-          .replace(/^#+\s*(.*)/gm, (match, p1) => {
+          .replace(/^#+\s*(.*)/gm, (match: any, p1: any) => {
             subIndex = 1; // reset sub-point counter for each new header
             return `\n${sectionIndex++}. ${p1}`;
           }) 
-          .replace(/^[-*]\s+(.*)/gm, (match, p1) => `   ${subIndex++}. ${p1}`) // Format sub-points as 1. 2.
+          .replace(/^[-*]\s+(.*)/gm, (match: any, p1: any) => `   ${subIndex++}. ${p1}`) // Format sub-points as 1. 2.
           .trim();
         doc.text(cleanPdfText, 50, 60, { width: 512, align: "left", lineGap: 3 });
       } else {
@@ -206,13 +208,14 @@ function generatePDFReport(
         // Header band
         doc.rect(50, currentY, 512, 18).fill(borderCol);
         doc.fillColor("#ffffff").font("Helvetica-Bold").fontSize(9);
-        doc.text(`Transaction ID: ${t.transactionId}`, 60, currentY + 5);
+        doc.text(`Transaction ID: ${decrypt(t.transactionIdEncrypted) || "Unknown"}`, 60, currentY + 5);
         doc.text(`Risk Score: ${Math.round(t.riskScore)}% (${t.riskLevel.toUpperCase()})`, 400, currentY + 5, { align: "right", width: 150 });
 
         // Fields styling
         doc.fillColor("#1e293b").fontSize(8);
         
-        const rd = (t.rawData || {}) as Record<string, any>;
+        const rdText = t.rawDataEncrypted ? decrypt(t.rawDataEncrypted) : "{}";
+        const rd = JSON.parse(rdText || "{}");
         const date = rd.date || rd.Date || "N/A";
         const customer = rd.customer_id || rd.customerid || rd.Customer || rd.CustomerId || "N/A";
         const merchant = rd.merchant || rd.Merchant || rd.vendor || rd.Vendor || "N/A";

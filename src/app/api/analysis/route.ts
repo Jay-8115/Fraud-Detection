@@ -9,6 +9,7 @@ import { parseCSV } from "@/lib/csvParser";
 import { runEnsembleFraudDetection } from "@/lib/fraudDetection";
 import { generateAISummary, generateBatchTransactionExplanations } from "@/lib/gemini";
 import { formatAnalysis } from "@/lib/format";
+import { encrypt, decrypt } from "@/lib/crypto";
 import { getUploadDir } from "@/lib/storage";
 
 export async function GET(request: Request) {
@@ -77,7 +78,7 @@ export async function POST(request: Request) {
       .values({ 
         userId: user.id, 
         fileId: file.id, 
-        fileName: file.originalName, 
+        fileNameEncrypted: file.originalNameEncrypted, 
         modelName, 
         status: "running",
         progressStep: "Preparing Dataset"
@@ -126,8 +127,8 @@ async function processAnalysis(
         const pdfData = await pdf(fs.readFileSync(filePath));
         rows = parsePDFTableHelper(pdfData.text);
       }
-    } else if (file.preview && Array.isArray(file.preview)) {
-      rows = file.preview as Record<string, unknown>[];
+    } else if (file.previewEncrypted) {
+      rows = JSON.parse(decrypt(file.previewEncrypted) || "[]") as Record<string, unknown>[];
     }
 
     if (rows.length === 0) {
@@ -180,7 +181,7 @@ async function processAnalysis(
       riskScore: p.riskScore,
       riskLevel: p.riskLevel,
       reason: "Pending AI Analysis...", // Temporary placeholder
-      rawData: p.rawData,
+      rawDataEncrypted: encrypt(JSON.stringify(p.rawData)),
     }));
 
     for (let i = 0; i < txValues.length; i += 500) {
@@ -217,15 +218,16 @@ async function processAnalysis(
 
     await db.insert(auditLogsTable).values({
       userId,
-      userEmail,
+      userEmailEncrypted: encrypt(userEmail),
       action: "analysis",
       resource: "analysis",
       resourceId: String(analysisId),
-      details: `Completed ensemble analysis on ${file.originalName} using weighted majority voting`,
+      detailsEncrypted: encrypt(`Completed ensemble analysis on ${decrypt(file.originalNameEncrypted) || "Unknown File"} using weighted majority voting`),
     });
 
     // Auto-generate a report entry so it appears in the Reports tab immediately
-    const reportFileName = `FraudWatch_Report_${file.originalName.replace(/\.[^.]+$/, "")}_${Date.now()}.txt`;
+    const originalName = decrypt(file.originalNameEncrypted) || "Unknown";
+    const reportFileName = `FraudWatch_Report_${originalName.replace(/\.[^.]+$/, "")}_${Date.now()}.txt`;
     const downloadUrl = `/api/reports/download/${analysisId}`;
     
     // Check if report already exists for this analysis to prevent duplicates on retries
@@ -243,7 +245,7 @@ async function processAnalysis(
     }
 
     // Now securely run AI Explanation Generation in the background
-    processAIExplanations(analysisId, file.originalName, fraudPredictions, predictions.length, legitPredictions.length, fraudPercentage, metrics.accuracy, riskBreakdown, dataSummary?.stats?.meanAmount || 0).catch((e) => {
+    processAIExplanations(analysisId, originalName, fraudPredictions, predictions.length, legitPredictions.length, fraudPercentage, metrics.accuracy, riskBreakdown, dataSummary?.stats?.meanAmount || 0).catch((e) => {
       console.error("processAIExplanations background error:", e);
     });
 
@@ -282,7 +284,7 @@ async function processAIExplanations(
     });
 
     await db.update(analysesTable)
-      .set({ aiSummary, explanationProvider: summaryProvider })
+      .set({ aiSummaryEncrypted: encrypt(aiSummary), explanationProvider: summaryProvider })
       .where(eq(analysesTable.id, analysisId));
 
     // 2. Generate Batch Explanations (max 40 as per limit to prevent quota exhaustion)
@@ -301,7 +303,7 @@ async function processAIExplanations(
       for (const [txId, reason] of Object.entries(explanations)) {
         await db.update(transactionsTable)
           .set({ reason, explanationProvider: explProvider })
-          .where(and(eq(transactionsTable.analysisId, analysisId), eq(transactionsTable.transactionId, txId)));
+          .where(and(eq(transactionsTable.analysisId, analysisId), eq(transactionsTable.transactionIdEncrypted, encrypt(txId) || "")));
       }
     }
 
@@ -312,7 +314,7 @@ async function processAIExplanations(
       const reason = generateFallbackTransactionExplanation(tx, meanAmount);
       await db.update(transactionsTable)
         .set({ reason, explanationProvider: "system" })
-        .where(and(eq(transactionsTable.analysisId, analysisId), eq(transactionsTable.transactionId, tx.transactionId)));
+        .where(and(eq(transactionsTable.analysisId, analysisId), eq(transactionsTable.transactionIdEncrypted, encrypt(tx.transactionId) || "")));
     }
 
     // Mark explanations as completed

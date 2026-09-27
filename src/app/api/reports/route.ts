@@ -4,6 +4,7 @@ import { reportsTable, analysesTable, auditLogsTable } from "@/db";
 import { eq, and, desc, count } from "drizzle-orm";
 import { getAuthenticatedUser } from "@/lib/auth";
 import { formatReport } from "@/lib/format";
+import { encrypt, decrypt } from "@/lib/crypto";
 
 
 export async function GET(request: Request) {
@@ -68,7 +69,8 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Analysis not completed yet" }, { status: 400 });
     }
 
-    const fileName = `FraudWatch_Report_${analysis.fileName.replace(/\.[^.]+$/, "")}_${Date.now()}.txt`;
+    const originalName = decrypt(analysis.fileNameEncrypted) || "Unknown";
+    const fileName = `FraudWatch_Report_${originalName.replace(/\.[^.]+$/, "")}_${Date.now()}.txt`;
     const downloadUrl = `/api/reports/download/${analysis.id}`;
 
     const [report] = await db
@@ -83,11 +85,11 @@ export async function POST(request: Request) {
 
     await db.insert(auditLogsTable).values({
       userId: user.id,
-      userEmail: user.email,
+      userEmailEncrypted: encrypt(user.email),
       action: "generate_report",
       resource: "report",
       resourceId: String(report.id),
-      details: `Generated report for ${analysis.fileName}`,
+      detailsEncrypted: encrypt(`Generated report for ${originalName}`),
     });
 
     return NextResponse.json(formatReport(report), { status: 201 });

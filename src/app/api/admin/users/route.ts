@@ -1,9 +1,10 @@
 import { NextResponse } from "next/server";
 import { db } from "@/db";
 import { usersTable } from "@/db";
-import { eq, desc, count, ilike, and } from "drizzle-orm";
+import { eq, desc, count, and } from "drizzle-orm";
 import { getAuthenticatedUser } from "@/lib/auth";
 import { formatUser } from "@/lib/format";
+import { hashForLookup } from "@/lib/crypto";
 
 
 export async function GET(request: Request) {
@@ -22,7 +23,7 @@ export async function GET(request: Request) {
 
     let where: any = undefined;
     if (search) {
-      where = ilike(usersTable.email, `%${search}%`);
+      where = eq(usersTable.emailHmac, hashForLookup(search) || "");
     }
     if (status === "active") {
       where = where ? and(where, eq(usersTable.isBlocked, false)) : eq(usersTable.isBlocked, false);

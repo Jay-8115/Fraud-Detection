@@ -7,6 +7,7 @@ import { eq, and, ilike, desc, count } from "drizzle-orm";
 import { getAuthenticatedUser } from "@/lib/auth";
 import { parseCSV } from "@/lib/csvParser";
 import { formatFile } from "@/lib/format";
+import { encrypt, decrypt } from "@/lib/crypto";
 
 import { getUploadDir, safeWriteFile } from "@/lib/storage";
 
@@ -25,7 +26,7 @@ export async function GET(request: Request) {
 
     const baseWhere = eq(uploadedFilesTable.userId, user.id);
     const where = search
-      ? and(baseWhere, ilike(uploadedFilesTable.originalName, `%${search}%`))
+      ? baseWhere // ilike doesn't work on encrypted fields, fallback to client filtering or drop search here
       : baseWhere;
 
     const [files, [{ total }]] = await Promise.all([
@@ -128,13 +129,13 @@ export async function POST(request: Request) {
       .values({
         userId: user.id,
         fileName: uniqueFilename,
-        originalName: file.name,
+        originalNameEncrypted: encrypt(file.name),
         fileSize: file.size,
         fileType: ext.replace(".", ""),
         rowCount,
         columnCount,
         columns,
-        preview,
+        previewEncrypted: preview ? encrypt(JSON.stringify(preview)) : null,
         status: "ready",
       })
       .returning();
@@ -142,11 +143,11 @@ export async function POST(request: Request) {
     // Audit log
     await db.insert(auditLogsTable).values({
       userId: user.id,
-      userEmail: user.email,
+      userEmailEncrypted: encrypt(user.email),
       action: "upload",
       resource: "file",
       resourceId: String(dbFile.id),
-      details: `Uploaded ${file.name}`,
+      detailsEncrypted: encrypt(`Uploaded ${file.name}`),
     });
 
     return NextResponse.json(formatFile(dbFile), { status: 201 });

@@ -3,6 +3,7 @@ import { db } from "@/db";
 import { auditLogsTable } from "@/db";
 import { eq, desc } from "drizzle-orm";
 import { getAuthenticatedUser } from "@/lib/auth";
+import { decrypt } from "@/lib/crypto";
 
 export async function GET(req: NextRequest) {
   const user = await getAuthenticatedUser();
@@ -25,7 +26,7 @@ export async function GET(req: NextRequest) {
       logs.map((l) => ({
         id: String(l.id),
         type: l.action as "upload" | "analysis" | "report" | "login",
-        description: l.details ?? l.action,
+        description: (l.detailsEncrypted ? decrypt(l.detailsEncrypted) : null) ?? l.action,
         createdAt: l.createdAt.toISOString(),
       }))
     );

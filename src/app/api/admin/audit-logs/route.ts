@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/db";
 import { auditLogsTable } from "@/db";
 import { eq, desc, count } from "drizzle-orm";
+import { decrypt } from "@/lib/crypto";
 import { getAuthenticatedUser } from "@/lib/auth";
 
 export async function GET(request: Request) {
@@ -32,12 +33,12 @@ export async function GET(request: Request) {
       data: logs.map((l) => ({
         id: String(l.id),
         userId: String(l.userId),
-        userEmail: l.userEmail,
+        userEmail: decrypt(l.userEmailEncrypted) || "Unknown",
         action: l.action,
         resource: l.resource,
         resourceId: l.resourceId,
-        details: l.details,
-        ipAddress: l.ipAddress,
+        details: l.detailsEncrypted ? decrypt(l.detailsEncrypted) : null,
+        ipAddress: l.ipAddressEncrypted ? decrypt(l.ipAddressEncrypted) : null,
         createdAt: l.createdAt.toISOString(),
       })),
       total: Number(total),

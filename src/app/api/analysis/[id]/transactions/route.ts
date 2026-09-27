@@ -3,19 +3,20 @@ import { db } from "@/db";
 import { analysesTable, transactionsTable } from "@/db";
 import { eq, and, desc, count, gte, lte } from "drizzle-orm";
 import { getAuthenticatedUser } from "@/lib/auth";
+import { decrypt } from "@/lib/crypto";
 
 function formatTransaction(t: typeof transactionsTable.$inferSelect) {
   return {
     id: String(t.id),
     analysisId: String(t.analysisId),
-    transactionId: t.transactionId,
+    transactionId: decrypt(t.transactionIdEncrypted) || "Unknown",
     amount: t.amount,
     prediction: t.prediction,
     probability: t.probability,
     riskScore: t.riskScore,
     riskLevel: t.riskLevel,
     reason: t.reason,
-    rawData: t.rawData,
+    rawData: t.rawDataEncrypted ? JSON.parse(decrypt(t.rawDataEncrypted) || "{}") : {},
   };
 }
 

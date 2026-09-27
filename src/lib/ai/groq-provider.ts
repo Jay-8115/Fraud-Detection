@@ -25,7 +25,7 @@ export async function generateWithGroq(prompt: string): Promise<string> {
   const key = process.env.GROQ_API_KEY;
   if (!key) throw new Error("No Groq key configured");
   
-  const model = process.env.GROQ_MODEL || "llama-3.1-8b-instant";
+  const model = process.env.GROQ_MODEL || "openai/gpt-oss-20b";
   await verifyGroqModel(key, model);
 
   const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
@@ -61,7 +61,7 @@ export async function generateChatWithGroq(
   const key = process.env.GROQ_API_KEY;
   if (!key) throw new Error("No Groq key configured");
 
-  const model = process.env.GROQ_MODEL || "llama-3.1-8b-instant";
+  const model = process.env.GROQ_MODEL || "openai/gpt-oss-20b";
   await verifyGroqModel(key, model);
 
   const messages = [

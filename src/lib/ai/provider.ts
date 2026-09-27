@@ -14,30 +14,35 @@ export async function generateContent(prompt: string): Promise<{ text: string, p
   try {
     if (primary === "gemini") {
       const text = await generateWithGemini(prompt);
+      console.log(`[Diagnostic] Provider: gemini, Model: gemini-3.8-flash, Status: SUCCESS, FallbackUsed: false`);
       return { text, provider: "gemini" };
     } else if (primary === "groq") {
       const text = await generateWithGroq(prompt);
+      console.log(`[Diagnostic] Provider: groq, Model: openai/gpt-oss-20b, Status: SUCCESS, FallbackUsed: false`);
       return { text, provider: "groq" };
     }
   } catch (err: any) {
     lastError = err;
-    console.warn(`Primary AI provider (${primary}) failed:`, err?.message || "Unknown error");
+    console.warn(`[Diagnostic] Primary AI provider (${primary}) failed:`, err?.message || "Unknown error");
   }
 
   if (enableFallback) {
     try {
       if (fallback === "groq") {
         const text = await generateWithGroq(prompt);
+        console.log(`[Diagnostic] Provider: groq, Model: openai/gpt-oss-20b, Status: SUCCESS, FallbackUsed: true`);
         return { text, provider: "groq" };
       } else if (fallback === "gemini") {
         const text = await generateWithGemini(prompt);
+        console.log(`[Diagnostic] Provider: gemini, Model: gemini-3.8-flash, Status: SUCCESS, FallbackUsed: true`);
         return { text, provider: "gemini" };
       }
     } catch (err: any) {
-      console.warn(`Fallback AI provider (${fallback}) failed:`, err?.message || "Unknown error");
+      console.warn(`[Diagnostic] Fallback AI provider (${fallback}) failed:`, err?.message || "Unknown error");
     }
   }
 
+  console.warn(`[Diagnostic] All AI providers failed. Using system rules.`);
   throw new Error(`All configured AI providers failed. Last primary error: ${lastError?.message}`);
 }
 

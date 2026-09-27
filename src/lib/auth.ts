@@ -2,7 +2,7 @@ import { db } from "@/db";
 import { usersTable } from "@/db";
 import { eq } from "drizzle-orm";
 import { auth, currentUser } from "@clerk/nextjs/server";
-import { encrypt, hashForLookup } from "@/lib/crypto";
+import { encrypt, decrypt, hashForLookup } from "@/lib/crypto";
 
 export interface AuthenticatedUser {
   id: number;
@@ -23,10 +23,7 @@ export async function getAuthenticatedUser(): Promise<AuthenticatedUser | null> 
     // Fast path: Find user by clerkId or clerkIdHmac
     const hmacClerkId = hashForLookup(clerkId);
     let user = await db.query.usersTable.findFirst({
-      where: (table, { or, eq }) => or(
-        eq(table.clerkIdHmac, hmacClerkId || ""),
-        eq(table.clerkId, clerkId)
-      ),
+      where: eq(usersTable.clerkIdHmac, hmacClerkId || ""),
     });
 
     // Synchronization path: User doesn't exist, link by email or create new
@@ -43,21 +40,16 @@ export async function getAuthenticatedUser(): Promise<AuthenticatedUser | null> 
       const emailHmac = hashForLookup(email);
 
       const existingEmailUser = await db.query.usersTable.findFirst({
-        where: (table, { or, eq }) => or(
-          eq(table.emailHmac, emailHmac || ""),
-          eq(table.email, email)
-        ),
+        where: eq(usersTable.emailHmac, emailHmac || ""),
       });
 
       if (existingEmailUser) {
         // Link existing legacy account to new Clerk identity
         const updated = await db.update(usersTable)
           .set({ 
-            clerkId, 
             clerkIdEncrypted: encrypt(clerkId),
             clerkIdHmac: hashForLookup(clerkId),
-            name, 
-            nameEncrypted: encrypt(name),
+            name: name,
             updatedAt: new Date() 
           })
           .where(eq(usersTable.id, existingEmailUser.id))
@@ -67,24 +59,19 @@ export async function getAuthenticatedUser(): Promise<AuthenticatedUser | null> 
       } else {
         // Create new user (idempotent upsert safely handles race conditions)
         const inserted = await db.insert(usersTable).values({
-          clerkId,
           clerkIdEncrypted: encrypt(clerkId),
           clerkIdHmac: hashForLookup(clerkId),
-          email,
           emailEncrypted: encrypt(email),
           emailHmac: hashForLookup(email),
-          name,
-          nameEncrypted: encrypt(name),
+          name: name,
           role: "user",
           password: "", // Clerk handles passwords, do not store secrets
         }).onConflictDoUpdate({
-          target: usersTable.clerkId,
+          target: usersTable.clerkIdHmac,
           set: { 
-            email, 
             emailEncrypted: encrypt(email),
             emailHmac: hashForLookup(email),
-            name, 
-            nameEncrypted: encrypt(name),
+            name: name,
             updatedAt: new Date() 
           }
         }).returning();
@@ -109,13 +96,13 @@ export async function getAuthenticatedUser(): Promise<AuthenticatedUser | null> 
 
     return {
       id: user.id,
-      clerkId: user.clerkId,
-      email: user.email,
-      name: user.name,
+      clerkId: decrypt(user.clerkIdEncrypted) || "Unknown",
+      email: decrypt(user.emailEncrypted) || "Unknown",
+      name: user.name || "Unknown",
       role: user.role as "user" | "admin",
     };
   } catch (err) {
-    console.error("Authentication synchronization error");
+    console.error("Authentication synchronization error:", err);
     return null;
   }
 }

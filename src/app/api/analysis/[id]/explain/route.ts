@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { db, analysesTable, transactionsTable } from "@/db";
 import { eq, and } from "drizzle-orm";
 import { getAuthenticatedUser } from "@/lib/auth";
+import { encrypt, decrypt } from "@/lib/crypto";
 
 export async function POST(
   request: Request,
@@ -35,7 +36,8 @@ export async function POST(
       .where(eq(analysesTable.id, analysisId));
 
     // Run in background
-    resumeAIExplanations(analysisId, analysis.fileName, analysis.dataSummary).catch(e => {
+    const originalName = decrypt(analysis.fileNameEncrypted) || "Unknown";
+    resumeAIExplanations(analysisId, originalName, analysis.dataSummary).catch(e => {
       console.error("Failed to resume AI explanations", e);
     });
 
@@ -67,11 +69,11 @@ async function resumeAIExplanations(analysisId: number, fileName: string, dataSu
     }
 
     const txToExplain = pendingTxs.map(p => ({
-      transactionId: p.transactionId,
+      transactionId: decrypt(p.transactionIdEncrypted) || "Unknown",
       amount: p.amount,
       riskLevel: p.riskLevel,
       probability: p.probability,
-      rawData: p.rawData
+      rawData: p.rawDataEncrypted ? JSON.parse(decrypt(p.rawDataEncrypted) || "{}") : {}
     }));
 
     const { generateBatchTransactionExplanations } = await import("@/lib/ai/provider");
@@ -80,7 +82,7 @@ async function resumeAIExplanations(analysisId: number, fileName: string, dataSu
     for (const [txId, reason] of Object.entries(explanations)) {
       await db.update(transactionsTable)
         .set({ reason, explanationProvider: explProvider })
-        .where(and(eq(transactionsTable.analysisId, analysisId), eq(transactionsTable.transactionId, txId)));
+        .where(and(eq(transactionsTable.analysisId, analysisId), eq(transactionsTable.transactionIdEncrypted, encrypt(txId) || "")));
     }
 
     await db.update(analysesTable).set({ explanationStatus: "completed" }).where(eq(analysesTable.id, analysisId));

@@ -4,6 +4,7 @@ import { usersTable, auditLogsTable } from "@/db";
 import { eq } from "drizzle-orm";
 import { getAuthenticatedUser } from "@/lib/auth";
 import { formatUser } from "@/lib/format";
+import { encrypt, decrypt } from "@/lib/crypto";
 
 export async function PATCH(
   request: Request,
@@ -36,11 +37,11 @@ export async function PATCH(
 
     await db.insert(auditLogsTable).values({
       userId: user.id,
-      userEmail: user.email,
+      userEmailEncrypted: encrypt(user.email),
       action: isBlocked !== undefined ? (isBlocked ? "block_user" : "unblock_user") : "update_user",
       resource: "user",
       resourceId: String(targetUserId),
-      details: `Updated user ${updated.email}`,
+      detailsEncrypted: encrypt(`Updated user ${decrypt(updated.emailEncrypted)}`),
     });
 
     return NextResponse.json(formatUser(updated));
