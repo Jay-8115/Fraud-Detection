@@ -9,21 +9,8 @@ import { getAuthenticatedUser } from "@/lib/auth";
 export const metadata: Metadata = {
   title: "FraudWatch - Enterprise Fraud Detection",
   description: "Detect financial fraud with surgical precision.",
-  icons: {
-    icon: "/favicon.svg",
-  },
-};
 
-// This server component guarantees synchronization runs reliably on page load
-// after authentication, without relying on client-side API calls.
-async function UserSync() {
-  try {
-    await getAuthenticatedUser();
-  } catch (error) {
-    console.error("UserSync failed in layout");
-  }
-  return null;
-}
+};
 
 export default function RootLayout({
   children,
@@ -35,7 +22,6 @@ export default function RootLayout({
       <body className="min-h-screen bg-background font-sans antialiased" suppressHydrationWarning>
         <ClerkProvider>
           <Providers>
-            <UserSync />
             {children}
             <Analytics />
             <SpeedInsights />

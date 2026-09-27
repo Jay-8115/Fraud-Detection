@@ -101,7 +101,10 @@ export async function getAuthenticatedUser(): Promise<AuthenticatedUser | null> 
       name: user.name || "Unknown",
       role: user.role as "user" | "admin",
     };
-  } catch (err) {
+  } catch (err: any) {
+    if (err && err.digest === 'DYNAMIC_SERVER_USAGE') {
+      throw err; // Let Next.js handle dynamic rendering
+    }
     console.error("Authentication synchronization error:", err);
     return null;
   }
