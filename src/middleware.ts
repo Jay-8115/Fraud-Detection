@@ -1,12 +1,6 @@
 import { clerkMiddleware } from "@clerk/nextjs/server";
 
-export default clerkMiddleware({
-  // @ts-ignore - type definition might be missing or in beta
-  frontendApiProxy: {
-    // Only enable in production to avoid hijacking localhost or previews
-    enabled: process.env.NEXT_PUBLIC_VERCEL_ENV === "production",
-  },
-});
+export default clerkMiddleware();
 
 export const config = {
   matcher: [
