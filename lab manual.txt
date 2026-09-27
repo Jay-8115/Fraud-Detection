@@ -1,0 +1,190 @@
+FraudWatch - Lab Manual: CRUD Operations
+===================================================
+
+This document outlines the standard Create, Read, Update, and Delete (CRUD) operations used throughout the FraudWatch Next.js application using Drizzle ORM and PostgreSQL.
+
+---------------------------------------------------
+1. Users (usersTable)
+---------------------------------------------------
+
+CREATE (Register / Sync User):
+```typescript
+const [newUser] = await db.insert(usersTable).values({
+  clerkIdEncrypted: encrypt(clerkId),
+  clerkIdHmac: hashForLookup(clerkId),
+  emailEncrypted: encrypt(email),
+  emailHmac: hashForLookup(email),
+  name: "John Doe",
+  role: "user",
+}).returning();
+```
+
+READ (Fetch User Profile):
+```typescript
+const user = await db.query.usersTable.findFirst({
+  where: eq(usersTable.clerkIdHmac, hashForLookup(clerkId)),
+});
+```
+
+UPDATE (Modify Profile):
+```typescript
+await db.update(usersTable)
+  .set({ name: "Jane Doe", updatedAt: new Date() })
+  .where(eq(usersTable.id, userId));
+```
+
+DELETE (Delete Account):
+```typescript
+await db.delete(usersTable).where(eq(usersTable.id, userId));
+```
+
+
+---------------------------------------------------
+2. Files (filesTable)
+---------------------------------------------------
+
+CREATE (Upload Dataset):
+```typescript
+const [newFile] = await db.insert(filesTable).values({
+  userId: currentUserId,
+  filenameEncrypted: encrypt("transactions.csv"),
+  originalNameEncrypted: encrypt("transactions.csv"),
+  size: 1024500,
+  mimeType: "text/csv",
+}).returning();
+```
+
+READ (List User's Files):
+```typescript
+const files = await db.query.filesTable.findMany({
+  where: eq(filesTable.userId, currentUserId),
+  orderBy: [desc(filesTable.createdAt)],
+});
+```
+
+DELETE (Remove Uploaded File):
+```typescript
+await db.delete(filesTable).where(eq(filesTable.id, fileId));
+```
+
+
+---------------------------------------------------
+3. Analyses (analysesTable)
+---------------------------------------------------
+
+CREATE (Start Fraud Analysis):
+```typescript
+const [analysis] = await db.insert(analysesTable).values({
+  userId: currentUserId,
+  fileId: uploadedFileId,
+  status: "processing",
+}).returning();
+```
+
+READ (Get Analysis Results):
+```typescript
+const analysis = await db.query.analysesTable.findFirst({
+  where: eq(analysesTable.id, analysisId),
+  with: {
+    file: true,
+    transactions: true,
+  }
+});
+```
+
+UPDATE (Complete Analysis):
+```typescript
+await db.update(analysesTable)
+  .set({ 
+    status: "completed", 
+    fraudScore: 85.5,
+    summaryEncrypted: encrypt("High risk of fraudulent activity detected.")
+  })
+  .where(eq(analysesTable.id, analysisId));
+```
+
+DELETE (Remove Analysis):
+```typescript
+await db.delete(analysesTable).where(eq(analysesTable.id, analysisId));
+```
+
+
+---------------------------------------------------
+4. Transactions (transactionsTable)
+---------------------------------------------------
+
+CREATE (Bulk Insert Transactions):
+```typescript
+await db.insert(transactionsTable).values([
+  {
+    analysisId: currentAnalysisId,
+    transactionIdEncrypted: encrypt("TRX-101"),
+    amountEncrypted: encrypt("150.00"),
+    isFraudulent: true,
+    fraudScore: 92.5,
+    explanationEncrypted: encrypt("Unusual merchant location.")
+  },
+  // ... more transactions
+]);
+```
+
+READ (Fetch High-Risk Transactions):
+```typescript
+const fraudulentTx = await db.query.transactionsTable.findMany({
+  where: and(
+    eq(transactionsTable.analysisId, analysisId),
+    eq(transactionsTable.isFraudulent, true)
+  ),
+  orderBy: [desc(transactionsTable.fraudScore)],
+});
+```
+
+
+---------------------------------------------------
+5. Reports (reportsTable)
+---------------------------------------------------
+
+CREATE (Generate PDF Report):
+```typescript
+const [report] = await db.insert(reportsTable).values({
+  userId: currentUserId,
+  analysisId: targetAnalysisId,
+  type: "pdf",
+  status: "completed",
+  fileUrlEncrypted: encrypt("/downloads/report-123.pdf")
+}).returning();
+```
+
+READ (View Previous Reports):
+```typescript
+const reports = await db.query.reportsTable.findMany({
+  where: eq(reportsTable.userId, currentUserId),
+});
+```
+
+
+---------------------------------------------------
+6. Audit Logs (auditLogsTable)
+---------------------------------------------------
+
+CREATE (Log Admin Action):
+```typescript
+await db.insert(auditLogsTable).values({
+  userId: adminUserId,
+  userEmailEncrypted: encrypt("admin@fraudwatch.com"),
+  action: "DELETE_USER",
+  resource: "users",
+  resourceId: String(targetUserId),
+  detailsEncrypted: encrypt("Deleted due to policy violation.")
+});
+```
+
+READ (Admin Audit View):
+```typescript
+const logs = await db.query.auditLogsTable.findMany({
+  orderBy: [desc(auditLogsTable.createdAt)],
+  limit: 50
+});
+```
+
+(Note: Audit logs generally do not have UPDATE or DELETE operations to maintain immutability and compliance).
