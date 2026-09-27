@@ -1,6 +1,10 @@
 import { clerkMiddleware } from "@clerk/nextjs/server";
 
-export default clerkMiddleware();
+export default clerkMiddleware(
+  process.env.NODE_ENV === "production" 
+    ? { proxyUrl: "https://fraud-detection-nine-gilt.vercel.app/__clerk" } 
+    : {}
+);
 
 export const config = {
   matcher: [

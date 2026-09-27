@@ -33,7 +33,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className="min-h-screen bg-background font-sans antialiased">
-        <ClerkProvider>
+        <ClerkProvider proxyUrl={process.env.NODE_ENV === "production" ? "https://fraud-detection-nine-gilt.vercel.app/__clerk" : undefined}>
           <Providers>
             <UserSync />
             {children}
