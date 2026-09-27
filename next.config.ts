@@ -3,6 +3,9 @@ import path from "path";
 
 const nextConfig: NextConfig = {
   serverExternalPackages: ["pdfkit"],
+  env: {
+    NEXT_PUBLIC_CLERK_PROXY_URL: process.env.NODE_ENV === "production" ? "https://fraud-detection-nine-gilt.vercel.app/__clerk" : "",
+  },
   async headers() {
     return [
       {
