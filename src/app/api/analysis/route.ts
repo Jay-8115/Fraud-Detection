@@ -11,7 +11,7 @@ import { generateAISummary, generateBatchTransactionExplanations } from "@/lib/g
 import { formatAnalysis } from "@/lib/format";
 import { encrypt, decrypt } from "@/lib/crypto";
 import { getUploadDir } from "@/lib/storage";
-
+import { generateFallbackTransactionExplanation } from "@/lib/ai/fallback";
 export async function GET(request: Request) {
   const user = await getAuthenticatedUser();
   if (!user) {
@@ -310,7 +310,6 @@ async function processAIExplanations(
     // Apply fallback logic to the rest of the transactions (beyond the 40 limit)
     const remainingTxs = fraudPredictions.slice(40);
     for (const tx of remainingTxs) {
-      const { generateFallbackTransactionExplanation } = await import("@/lib/ai/fallback");
       const reason = generateFallbackTransactionExplanation(tx, meanAmount);
       await db.update(transactionsTable)
         .set({ reason, explanationProvider: "system" })
