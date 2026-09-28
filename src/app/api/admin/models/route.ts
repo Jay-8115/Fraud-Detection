@@ -85,11 +85,30 @@ let modelsData = [
   },
 ];
 
-export async function GET() {
-  const user = await getAuthenticatedUser();
-  if (!user || user.role !== "admin") {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+export async function GET(request: Request) {
+  const reqId = crypto.randomUUID();
+  console.log(`[AUTH-TRACE] [${reqId}] Starting authorization check for GET /api/admin/models`);
+  
+  let user;
+  try {
+    user = await getAuthenticatedUser();
+    console.log(`[AUTH-TRACE] [${reqId}] getAuthenticatedUser() completed. User found: ${!!user}, Role: ${user?.role || 'none'}`);
+  } catch (error) {
+    console.error(`[AUTH-TRACE] [${reqId}] getAuthenticatedUser() threw an error:`, error);
+    return NextResponse.json({ error: "Internal server error during authentication" }, { status: 500 });
   }
+
+  if (!user) {
+    console.log(`[AUTH-TRACE] [${reqId}] Authorization failed: No authenticated database user found (returning 401)`);
+    return NextResponse.json({ error: "Unauthorized - Authentication required" }, { status: 401 });
+  }
+
+  if (user.role !== "admin") {
+    console.log(`[AUTH-TRACE] [${reqId}] Authorization failed: User is authenticated but lacks admin role (returning 403)`);
+    return NextResponse.json({ error: "Forbidden - Admin access required" }, { status: 403 });
+  }
+
+  console.log(`[AUTH-TRACE] [${reqId}] Authorization successful: Verified admin access granted`);
 
   const activeModel = modelsData.find((m) => m.isActive) || modelsData[0];
 
@@ -108,10 +127,29 @@ export async function GET() {
 }
 
 export async function PATCH(request: Request) {
-  const user = await getAuthenticatedUser();
-  if (!user || user.role !== "admin") {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  const reqId = crypto.randomUUID();
+  console.log(`[AUTH-TRACE] [${reqId}] Starting authorization check for PATCH /api/admin/models`);
+  
+  let user;
+  try {
+    user = await getAuthenticatedUser();
+    console.log(`[AUTH-TRACE] [${reqId}] getAuthenticatedUser() completed. User found: ${!!user}, Role: ${user?.role || 'none'}`);
+  } catch (error) {
+    console.error(`[AUTH-TRACE] [${reqId}] getAuthenticatedUser() threw an error:`, error);
+    return NextResponse.json({ error: "Internal server error during authentication" }, { status: 500 });
   }
+
+  if (!user) {
+    console.log(`[AUTH-TRACE] [${reqId}] Authorization failed: No authenticated database user found (returning 401)`);
+    return NextResponse.json({ error: "Unauthorized - Authentication required" }, { status: 401 });
+  }
+
+  if (user.role !== "admin") {
+    console.log(`[AUTH-TRACE] [${reqId}] Authorization failed: User is authenticated but lacks admin role (returning 403)`);
+    return NextResponse.json({ error: "Forbidden - Admin access required" }, { status: 403 });
+  }
+
+  console.log(`[AUTH-TRACE] [${reqId}] Authorization successful: Verified admin access granted`);
 
   try {
     const body = await request.json();

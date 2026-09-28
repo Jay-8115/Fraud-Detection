@@ -68,7 +68,20 @@ export default function MLModelManagementPage() {
     try {
       setLoading(true);
       const res = await fetch("/api/admin/models");
-      if (!res.ok) throw new Error("Failed to load model data");
+      
+      if (!res.ok) {
+        if (res.status === 401) {
+          throw new Error("Authentication required. Please sign in to access this page.");
+        }
+        if (res.status === 403) {
+          throw new Error("Access denied. You do not have the required admin privileges.");
+        }
+        if (res.status === 503) {
+          throw new Error("ML models service is currently unavailable. Please try again later.");
+        }
+        throw new Error(`Failed to load model data: ${res.statusText}`);
+      }
+      
       const data = await res.json();
       setActiveModel(data.activeModel);
       setAvailableModels(data.availableModels || []);
@@ -99,7 +112,15 @@ export default function MLModelManagementPage() {
         body: JSON.stringify({ modelId, action }),
       });
 
-      if (!res.ok) throw new Error("Failed to update model status");
+      if (!res.ok) {
+        if (res.status === 401) {
+          throw new Error("Authentication required. Please sign in to access this page.");
+        }
+        if (res.status === 403) {
+          throw new Error("Access denied. You do not have the required admin privileges.");
+        }
+        throw new Error("Failed to update model status");
+      }
       const data = await res.json();
 
       setActiveModel(data.activeModel);

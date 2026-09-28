@@ -17,8 +17,10 @@ export async function getAuthenticatedUser(): Promise<AuthenticatedUser | null> 
     const { userId: clerkId } = await auth();
 
     if (!clerkId) {
+      console.log(`[AUTH-SYNC] No clerkId found in auth() context.`);
       return null;
     }
+    console.log(`[AUTH-SYNC] clerkId present in auth() context.`);
 
     // Fast path: Find user by clerkId or clerkIdHmac
     const hmacClerkId = hashForLookup(clerkId);
@@ -93,6 +95,22 @@ export async function getAuthenticatedUser(): Promise<AuthenticatedUser | null> 
         // Log safe message without exposing user secrets
         console.error("Failed to update user login timestamp"); 
       });
+
+    // Sync role to Clerk if missing
+    if (user.role === "admin") {
+      try {
+        const clerkClient = await import("@clerk/nextjs/server").then(m => m.clerkClient());
+        const clerkUserObj = await clerkClient.users.getUser(clerkId);
+        if (clerkUserObj.publicMetadata.role !== "admin") {
+          await clerkClient.users.updateUserMetadata(clerkId, {
+            publicMetadata: { role: "admin" }
+          });
+          console.log(`Synced admin role to Clerk metadata for user ${clerkId}`);
+        }
+      } catch (metaErr) {
+        console.error("Failed to sync role to Clerk metadata", metaErr);
+      }
+    }
 
     return {
       id: user.id,
