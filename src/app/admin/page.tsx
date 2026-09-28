@@ -21,7 +21,7 @@ import {
 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { format, parseISO } from "date-fns";
-import { useUser } from "@clerk/nextjs";
+import { useUser } from "@/hooks/use-user";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 
@@ -29,7 +29,7 @@ export default function AdminDashboard() {
   const { user, isLoaded } = useUser();
   const router = useRouter();
 
-  const isAdmin = user?.publicMetadata?.role === "admin";
+  const isAdmin = user?.role === "admin";
 
   useEffect(() => {
     if (isLoaded) {

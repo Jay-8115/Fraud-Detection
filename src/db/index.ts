@@ -10,7 +10,11 @@ if (!process.env.DATABASE_URL) {
   );
 }
 
-export const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+// Neon postgres connection strings usually include ?sslmode=require, which triggers a node-postgres warning.
+// We replace it here with verify-full to suppress the warning while retaining the exact same current security behavior.
+const connectionString = process.env.DATABASE_URL.replace("sslmode=require", "sslmode=verify-full");
+
+export const pool = new Pool({ connectionString });
 export const db = drizzle(pool, { schema });
 
 export * from "./schema";

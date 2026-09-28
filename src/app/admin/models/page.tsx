@@ -22,7 +22,7 @@ import {
 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
-import { useUser } from "@clerk/nextjs";
+import { useUser } from "@/hooks/use-user";
 import { useRouter } from "next/navigation";
 
 type ModelItem = {
@@ -52,7 +52,7 @@ export default function MLModelManagementPage() {
   const [activeModel, setActiveModel] = useState<ModelItem | null>(null);
   const [availableModels, setAvailableModels] = useState<ModelItem[]>([]);
 
-  const isAdmin = user?.publicMetadata?.role === "admin";
+  const isAdmin = user?.role === "admin";
 
   useEffect(() => {
     if (isLoaded) {

@@ -6,6 +6,8 @@ import { TooltipProvider } from '@/components/ui/tooltip';
 import { Toaster } from '@/components/ui/toaster';
 import { ThemeProvider as NextThemesProvider } from "next-themes";
 
+import { UserProvider } from '@/hooks/use-user';
+
 export function Providers({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(() => new QueryClient({
     defaultOptions: {
@@ -22,10 +24,12 @@ export function Providers({ children }: { children: React.ReactNode }) {
   return (
     <NextThemesProvider attribute="class" defaultTheme="system" enableSystem>
       <QueryClientProvider client={queryClient}>
-        <TooltipProvider>
-          {children}
-          <Toaster />
-        </TooltipProvider>
+        <UserProvider>
+          <TooltipProvider>
+            {children}
+            <Toaster />
+          </TooltipProvider>
+        </UserProvider>
       </QueryClientProvider>
     </NextThemesProvider>
   );

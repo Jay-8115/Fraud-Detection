@@ -1,129 +1,111 @@
 import { db } from "@/db";
 import { usersTable } from "@/db";
+import { sessionsTable } from "@/db/schema/sessions";
 import { eq } from "drizzle-orm";
-import { auth, currentUser } from "@clerk/nextjs/server";
 import { encrypt, decrypt, hashForLookup } from "@/lib/crypto";
+import { cookies } from "next/headers";
+import crypto from "crypto";
 
 export interface AuthenticatedUser {
   id: number;
-  clerkId: string;
   email: string;
   name: string;
   role: "user" | "admin";
 }
 
+const SESSION_COOKIE_NAME = "session_token";
+
+function hashToken(token: string): string {
+  return crypto.createHash("sha256").update(token).digest("hex");
+}
+
 export async function getAuthenticatedUser(): Promise<AuthenticatedUser | null> {
   try {
-    const { userId: clerkId } = await auth();
+    const cookieStore = await cookies();
+    const token = cookieStore.get(SESSION_COOKIE_NAME)?.value;
 
-    if (!clerkId) {
-      console.log(`[AUTH-SYNC] No clerkId found in auth() context.`);
+    if (!token) {
       return null;
     }
-    console.log(`[AUTH-SYNC] clerkId present in auth() context.`);
 
-    // Fast path: Find user by clerkId or clerkIdHmac
-    const hmacClerkId = hashForLookup(clerkId);
-    let user = await db.query.usersTable.findFirst({
-      where: eq(usersTable.clerkIdHmac, hmacClerkId || ""),
+    const tokenHash = hashToken(token);
+    
+    // Find session in database
+    const session = await db.query.sessionsTable.findFirst({
+      where: eq(sessionsTable.tokenHash, tokenHash),
     });
 
-    // Synchronization path: User doesn't exist, link by email or create new
-    if (!user) {
-      const clerkUser = await currentUser();
-      
-      if (!clerkUser) {
-        return null;
-      }
-
-      const email = clerkUser.emailAddresses[0]?.emailAddress || "";
-      const name = `${clerkUser.firstName || ""} ${clerkUser.lastName || ""}`.trim() || email.split("@")[0] || "Unknown User";
-
-      const emailHmac = hashForLookup(email);
-
-      const existingEmailUser = await db.query.usersTable.findFirst({
-        where: eq(usersTable.emailHmac, emailHmac || ""),
-      });
-
-      if (existingEmailUser) {
-        // Link existing legacy account to new Clerk identity
-        const updated = await db.update(usersTable)
-          .set({ 
-            clerkIdEncrypted: encrypt(clerkId),
-            clerkIdHmac: hashForLookup(clerkId),
-            name: name,
-            updatedAt: new Date() 
-          })
-          .where(eq(usersTable.id, existingEmailUser.id))
-          .returning();
-        
-        user = updated[0];
-      } else {
-        // Create new user (idempotent upsert safely handles race conditions)
-        const inserted = await db.insert(usersTable).values({
-          clerkIdEncrypted: encrypt(clerkId),
-          clerkIdHmac: hashForLookup(clerkId),
-          emailEncrypted: encrypt(email),
-          emailHmac: hashForLookup(email),
-          name: name,
-          role: "user",
-          password: "", // Clerk handles passwords, do not store secrets
-        }).onConflictDoUpdate({
-          target: usersTable.clerkIdHmac,
-          set: { 
-            emailEncrypted: encrypt(email),
-            emailHmac: hashForLookup(email),
-            name: name,
-            updatedAt: new Date() 
-          }
-        }).returning();
-        
-        user = inserted[0];
-      }
+    if (!session || session.expiresAt < new Date()) {
+      return null;
     }
+
+    // Update lastUsedAt if more than 1 hour passed
+    if (new Date().getTime() - session.lastUsedAt.getTime() > 1000 * 60 * 60) {
+      db.update(sessionsTable)
+        .set({ lastUsedAt: new Date() })
+        .where(eq(sessionsTable.id, session.id))
+        .execute()
+        .catch(err => console.error("Failed to update session lastUsedAt"));
+    }
+
+    const user = await db.query.usersTable.findFirst({
+      where: eq(usersTable.id, session.userId),
+    });
 
     if (!user || user.isBlocked) {
       return null;
     }
 
-    // Fire-and-forget last login update (non-blocking)
-    db.update(usersTable)
-      .set({ lastLoginAt: new Date() })
-      .where(eq(usersTable.id, user.id))
-      .execute()
-      .catch(err => {
-        // Log safe message without exposing user secrets
-        console.error("Failed to update user login timestamp"); 
-      });
-
-    // Sync role to Clerk if missing
-    if (user.role === "admin") {
-      try {
-        const clerkClient = await import("@clerk/nextjs/server").then(m => m.clerkClient());
-        const clerkUserObj = await clerkClient.users.getUser(clerkId);
-        if (clerkUserObj.publicMetadata.role !== "admin") {
-          await clerkClient.users.updateUserMetadata(clerkId, {
-            publicMetadata: { role: "admin" }
-          });
-          console.log(`Synced admin role to Clerk metadata for user ${clerkId}`);
-        }
-      } catch (metaErr) {
-        console.error("Failed to sync role to Clerk metadata", metaErr);
-      }
-    }
-
     return {
       id: user.id,
-      clerkId: decrypt(user.clerkIdEncrypted) || "Unknown",
       email: decrypt(user.emailEncrypted) || "Unknown",
       name: user.name || "Unknown",
       role: user.role as "user" | "admin",
     };
   } catch (err: any) {
     if (err && err.digest === 'DYNAMIC_SERVER_USAGE') {
-      throw err; // Let Next.js handle dynamic rendering
+      throw err;
     }
-    console.error("Authentication synchronization error:", err);
+    console.error("Authentication check error:", err);
     return null;
+  }
+}
+
+export async function createSession(userId: number): Promise<void> {
+  const tokenBytes = crypto.randomBytes(32);
+  const token = tokenBytes.toString("hex");
+  const tokenHash = hashToken(token);
+  const expiresAt = new Date(Date.now() + 1000 * 60 * 60 * 24 * 7); // 7 days
+
+  await db.insert(sessionsTable).values({
+    tokenHash,
+    userId,
+    expiresAt,
+  });
+
+  const cookieStore = await cookies();
+  cookieStore.set(SESSION_COOKIE_NAME, token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    path: "/",
+    expires: expiresAt,
+  });
+}
+
+export async function invalidateSession(): Promise<void> {
+  try {
+    const cookieStore = await cookies();
+    const token = cookieStore.get(SESSION_COOKIE_NAME)?.value;
+
+    if (token) {
+      const tokenHash = hashToken(token);
+      await db.delete(sessionsTable).where(eq(sessionsTable.tokenHash, tokenHash));
+    }
+  } catch (err) {
+    console.error("Failed to invalidate session", err);
+  } finally {
+    const cookieStore = await cookies();
+    cookieStore.delete(SESSION_COOKIE_NAME);
   }
 }

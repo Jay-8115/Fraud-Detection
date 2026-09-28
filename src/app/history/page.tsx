@@ -15,7 +15,7 @@ import { Input } from "@/components/ui/input"
 import { useToast } from "@/hooks/use-toast"
 import { useQueryClient } from "@tanstack/react-query"
 import { getListAnalysesQueryKey } from "@/api-client"
-import { useUser } from "@clerk/nextjs"
+import { useUser } from "@/hooks/use-user"
 import { useRouter } from "next/navigation"
 
 export default function HistoryPage() {

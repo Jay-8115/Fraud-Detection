@@ -13,7 +13,7 @@ import { AlertCircle, Download, RefreshCw, Sparkles, Filter, Search, CheckCircle
 import { Input } from "@/components/ui/input"
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, LineChart, Line } from "recharts"
 import { formatCurrency } from "@/lib/utils"
-import { useUser } from "@clerk/nextjs"
+import { useUser } from "@/hooks/use-user"
 import { AISummaryViewer } from "@/components/analysis/AISummaryViewer"
 import * as XLSX from "xlsx"
 

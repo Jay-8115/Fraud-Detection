@@ -23,7 +23,7 @@ import {
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
-import { useUser } from "@clerk/nextjs";
+import { useUser } from "@/hooks/use-user";
 import { useRouter } from "next/navigation";
 import {
   AlertDialog,
@@ -44,7 +44,7 @@ export default function AdminUsersPage() {
   const [statusFilter, setStatusFilter] = useState<"all" | "active" | "blocked">("all");
   const [userToDelete, setUserToDelete] = useState<{ id: string; name: string; email: string } | null>(null);
 
-  const isAdmin = user?.publicMetadata?.role === "admin";
+  const isAdmin = user?.role === "admin";
 
   useEffect(() => {
     if (isLoaded) {

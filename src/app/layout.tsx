@@ -1,4 +1,4 @@
-import { ClerkProvider } from "@clerk/nextjs";
+
 import type { Metadata } from "next";
 import "./globals.css";
 import { Providers } from "./providers";
@@ -20,13 +20,11 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className="min-h-screen bg-background font-sans antialiased" suppressHydrationWarning>
-        <ClerkProvider>
-          <Providers>
-            {children}
-            <Analytics />
-            <SpeedInsights />
-          </Providers>
-        </ClerkProvider>
+        <Providers>
+          {children}
+          <Analytics />
+          <SpeedInsights />
+        </Providers>
       </body>
     </html>
   );

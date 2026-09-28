@@ -21,16 +21,17 @@ export async function GET() {
   }
 
   return NextResponse.json({
-    id: String(dbUser.id),
-    clerkId: decrypt(dbUser.clerkIdEncrypted) || "Unknown",
-    email: decrypt(dbUser.emailEncrypted) || "Unknown",
-    name: dbUser.name || "Unknown",
-    role: dbUser.role,
-    isBlocked: dbUser.isBlocked,
-    totalUploads: dbUser.totalUploads,
-    totalAnalyses: dbUser.totalAnalyses,
-    lastLoginAt: dbUser.lastLoginAt?.toISOString() ?? null,
-    createdAt: dbUser.createdAt.toISOString(),
+    user: {
+      id: dbUser.id, // Number, not String, since AuthenticatedUser expects number
+      email: decrypt(dbUser.emailEncrypted) || "Unknown",
+      name: dbUser.name || "Unknown",
+      role: dbUser.role,
+      isBlocked: dbUser.isBlocked,
+      totalUploads: dbUser.totalUploads,
+      totalAnalyses: dbUser.totalAnalyses,
+      lastLoginAt: dbUser.lastLoginAt?.toISOString() ?? null,
+      createdAt: dbUser.createdAt.toISOString(),
+    }
   });
 }
 
@@ -53,16 +54,17 @@ export async function PATCH(request: Request) {
     }
 
     return NextResponse.json({
-      id: String(updatedUser.id),
-      clerkId: decrypt(updatedUser.clerkIdEncrypted) || "Unknown",
-      email: decrypt(updatedUser.emailEncrypted) || "Unknown",
-      name: updatedUser.name || "Unknown",
-      role: updatedUser.role,
-      isBlocked: updatedUser.isBlocked,
-      totalUploads: updatedUser.totalUploads,
-      totalAnalyses: updatedUser.totalAnalyses,
-      lastLoginAt: updatedUser.lastLoginAt?.toISOString() ?? null,
-      createdAt: updatedUser.createdAt.toISOString(),
+      user: {
+        id: updatedUser.id,
+        email: decrypt(updatedUser.emailEncrypted) || "Unknown",
+        name: updatedUser.name || "Unknown",
+        role: updatedUser.role,
+        isBlocked: updatedUser.isBlocked,
+        totalUploads: updatedUser.totalUploads,
+        totalAnalyses: updatedUser.totalAnalyses,
+        lastLoginAt: updatedUser.lastLoginAt?.toISOString() ?? null,
+        createdAt: updatedUser.createdAt.toISOString(),
+      }
     });
   } catch (err) {
     return NextResponse.json({ error: "Bad request" }, { status: 400 });

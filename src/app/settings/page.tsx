@@ -5,28 +5,34 @@ import { AppLayout } from "@/components/layout/AppLayout"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { useUser, useClerk } from "@clerk/nextjs"
+import { useUser } from "@/hooks/use-user"
 import { useGetMe, useUpdateMe, useDeleteMe } from "@/api-client"
 import { useToast } from "@/hooks/use-toast"
 import { Save, LogOut, AlertTriangle } from "lucide-react"
 import { useRouter } from "next/navigation"
+import { logoutAction } from "@/actions/auth"
 
 export default function SettingsPage() {
   const { user, isLoaded } = useUser()
-  const { signOut } = useClerk()
   const router = useRouter()
   const { data: me, isLoading } = useGetMe()
   const updateMe = useUpdateMe()
   const deleteMe = useDeleteMe()
   const { toast } = useToast()
 
-  const [name, setName] = useState(user?.fullName || "")
+  const [name, setName] = useState(user?.name || "")
 
   useEffect(() => {
     if (isLoaded && !user) {
       router.push("/sign-in")
     }
   }, [user, isLoaded, router])
+
+  useEffect(() => {
+    if (user?.name && !name) {
+      setName(user.name);
+    }
+  }, [user]);
 
   if (!isLoaded || !user) {
     return null
@@ -43,8 +49,9 @@ export default function SettingsPage() {
   const handleDelete = () => {
     if (confirm("WARNING: This will permanently delete your account and all associated data. This action cannot be undone. Proceed?")) {
       deleteMe.mutate(undefined, {
-        onSuccess: () => {
-          signOut({ redirectUrl: "/" })
+        onSuccess: async () => {
+          const res = await logoutAction();
+          if (res?.success) window.location.href = res.redirectUrl;
         }
       })
     }
@@ -60,12 +67,12 @@ export default function SettingsPage() {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex items-center gap-4 mb-6">
-              <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center text-2xl font-bold text-primary">
-                {user?.firstName?.[0] || user?.emailAddresses?.[0]?.emailAddress?.[0]?.toUpperCase()}
+              <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center text-2xl font-bold text-primary uppercase">
+                {user?.name?.[0] || user?.email?.[0] || "U"}
               </div>
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Email Address</p>
-                <p className="font-medium">{user?.emailAddresses?.[0]?.emailAddress}</p>
+                <p className="font-medium">{user?.email}</p>
               </div>
             </div>
             

@@ -10,7 +10,7 @@ import { FileUp, AlertTriangle, CheckCircle2, ShieldAlert, Activity } from "luci
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, Area, AreaChart } from "recharts"
 import { format, parseISO } from "date-fns"
 import { Skeleton } from "@/components/ui/skeleton"
-import { useUser } from "@clerk/nextjs"
+import { useUser } from "@/hooks/use-user"
 import { useRouter } from "next/navigation"
 
 export default function Dashboard() {
@@ -31,7 +31,7 @@ export default function Dashboard() {
     return null
   }
 
-  const isAdmin = user?.publicMetadata?.role === "admin"
+  const isAdmin = user?.role === "admin"
   const safeTrends = Array.isArray(trends) ? trends : []
   const safeActivity = Array.isArray(activity) ? activity : []
 
